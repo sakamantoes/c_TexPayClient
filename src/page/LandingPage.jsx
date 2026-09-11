@@ -116,7 +116,7 @@ function Button({ as = "button", variant = "primary", children, className = "", 
    eye learns "this square-edged, mono-typeset block is real system output." */
 function CodeWindow({ label = "request.js", lines }) {
   return (
-    <div className="rounded-none border border-[var(--ctex-border)] bg-[var(--ctex-elevated)] shadow-[0_24px_60px_-24px_rgba(11,104,173,0.35)] overflow-hidden">
+    <div className="w-full max-w-full overflow-hidden rounded-none border border-[var(--ctex-border)] bg-[var(--ctex-elevated)] shadow-[0_24px_60px_-24px_rgba(11,104,173,0.35)]">
       <div className="flex items-center justify-between border-b border-[var(--ctex-border)] px-3 sm:px-4 py-2 sm:py-2.5">
         <div className="flex items-center gap-1.5">
           <span className="h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-[var(--ctex-border)]" />
@@ -125,8 +125,8 @@ function CodeWindow({ label = "request.js", lines }) {
         </div>
         <span className="font-mono text-[10px] sm:text-xs text-[var(--ctex-text-muted)]">{label}</span>
       </div>
-      <pre className="overflow-x-auto px-3 sm:px-5 py-3 sm:py-5 font-mono text-[11px] sm:text-[13px] leading-relaxed text-[var(--ctex-text)]">
-        <code>{lines}</code>
+      <pre className="max-w-full overflow-x-auto whitespace-pre-wrap break-words px-3 sm:px-5 py-3 sm:py-5 font-mono text-[11px] sm:text-[13px] leading-relaxed text-[var(--ctex-text)]">
+        <code className="block min-w-0 whitespace-pre-wrap break-words">{lines}</code>
       </pre>
     </div>
   );
