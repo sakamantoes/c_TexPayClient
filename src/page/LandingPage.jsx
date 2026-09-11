@@ -70,7 +70,7 @@ function Reveal({ children, delay = 0, className = "" }) {
 
 function Eyebrow({ children }) {
   return (
-    <p className="font-mono text-[13px] text-ctex-blue dark:text-ctex-blue-light">
+    <p className="font-mono text-[12px] sm:text-[13px] text-ctex-blue dark:text-ctex-blue-light">
       {children}
     </p>
   );
@@ -80,11 +80,11 @@ function SectionHeading({ eyebrow, title, sub, align = "left" }) {
   return (
     <div className={align === "center" ? "text-center mx-auto max-w-2xl" : "max-w-2xl"}>
       {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
-      <h2 className="mt-3 font-display text-3xl sm:text-4xl font-semibold tracking-tight text-[var(--ctex-text)]">
+      <h2 className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight text-[var(--ctex-text)]">
         {title}
       </h2>
       {sub && (
-        <p className="mt-4 text-base leading-relaxed text-[var(--ctex-text-muted)]">
+        <p className="mt-3 sm:mt-4 text-sm sm:text-base leading-relaxed text-[var(--ctex-text-muted)]">
           {sub}
         </p>
       )}
@@ -94,7 +94,7 @@ function SectionHeading({ eyebrow, title, sub, align = "left" }) {
 
 function Button({ as = "button", variant = "primary", children, className = "", ...props }) {
   const base =
-    "inline-flex items-center justify-center gap-2 rounded-md px-5 py-3 text-sm font-medium transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ctex-blue";
+    "inline-flex items-center justify-center gap-2 rounded-md px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ctex-blue";
   const variants = {
     primary:
       "bg-ctex-blue text-white hover:bg-ctex-blue-light",
@@ -116,16 +116,16 @@ function Button({ as = "button", variant = "primary", children, className = "", 
    eye learns "this square-edged, mono-typeset block is real system output." */
 function CodeWindow({ label = "request.js", lines }) {
   return (
-    <div className="rounded-none border border-[var(--ctex-border)] bg-[var(--ctex-elevated)] shadow-[0_24px_60px_-24px_rgba(11,104,173,0.35)]">
-      <div className="flex items-center justify-between border-b border-[var(--ctex-border)] px-4 py-2.5">
+    <div className="rounded-none border border-[var(--ctex-border)] bg-[var(--ctex-elevated)] shadow-[0_24px_60px_-24px_rgba(11,104,173,0.35)] overflow-hidden">
+      <div className="flex items-center justify-between border-b border-[var(--ctex-border)] px-3 sm:px-4 py-2 sm:py-2.5">
         <div className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-[var(--ctex-border)]" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[var(--ctex-border)]" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[var(--ctex-border)]" />
+          <span className="h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-[var(--ctex-border)]" />
+          <span className="h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-[var(--ctex-border)]" />
+          <span className="h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-[var(--ctex-border)]" />
         </div>
-        <span className="font-mono text-xs text-[var(--ctex-text-muted)]">{label}</span>
+        <span className="font-mono text-[10px] sm:text-xs text-[var(--ctex-text-muted)]">{label}</span>
       </div>
-      <pre className="overflow-x-auto px-5 py-5 font-mono text-[13px] leading-relaxed text-[var(--ctex-text)]">
+      <pre className="overflow-x-auto px-3 sm:px-5 py-3 sm:py-5 font-mono text-[11px] sm:text-[13px] leading-relaxed text-[var(--ctex-text)]">
         <code>{lines}</code>
       </pre>
     </div>
@@ -142,10 +142,10 @@ function FlowSteps({ steps, orientation = "vertical" }) {
       {steps.map((step, i) => (
         <div
           key={step.title}
-          className={isRow ? "flex flex-1 items-start gap-3" : "flex gap-4"}
+          className={isRow ? "flex flex-1 items-start gap-3" : "flex gap-3 sm:gap-4"}
         >
           <div className="flex flex-col items-center">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-ctex-blue/40 bg-ctex-blue/5 font-mono text-xs text-ctex-blue dark:text-ctex-blue-light">
+            <div className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full border border-ctex-blue/40 bg-ctex-blue/5 font-mono text-[10px] sm:text-xs text-ctex-blue dark:text-ctex-blue-light">
               {i + 1}
             </div>
             {i < steps.length - 1 && (
@@ -158,9 +158,9 @@ function FlowSteps({ steps, orientation = "vertical" }) {
               />
             )}
           </div>
-          <div className={isRow ? "pb-8" : "pb-8"}>
-            <p className="font-medium text-[var(--ctex-text)]">{step.title}</p>
-            <p className="mt-1 text-sm text-[var(--ctex-text-muted)]">{step.desc}</p>
+          <div className={isRow ? "pb-8" : "pb-6 sm:pb-8"}>
+            <p className="font-medium text-sm sm:text-base text-[var(--ctex-text)]">{step.title}</p>
+            <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-[var(--ctex-text-muted)]">{step.desc}</p>
           </div>
         </div>
       ))}
@@ -198,12 +198,12 @@ function Navbar({ theme, setTheme }) {
           : "border-b border-transparent bg-transparent"
       }`}
     >
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <Link to="/" className="font-display text-lg font-semibold tracking-tight text-[var(--ctex-text)]">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
+        <Link to="/" className="font-display text-base sm:text-lg font-semibold tracking-tight text-[var(--ctex-text)]">
           C-TEX <span className="text-ctex-blue">PAY</span>
         </Link>
 
-        <nav className="hidden items-center gap-8 md:flex">
+        <nav className="hidden items-center gap-6 md:flex lg:gap-8">
           {links.map((l) => (
             <a
               key={l.label}
@@ -219,9 +219,9 @@ function Navbar({ theme, setTheme }) {
           <button
             aria-label="Toggle theme"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="flex h-9 w-9 items-center justify-center rounded-md border border-[var(--ctex-border)] text-[var(--ctex-text-muted)] transition-colors hover:text-ctex-blue"
+            className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-md border border-[var(--ctex-border)] text-[var(--ctex-text-muted)] transition-colors hover:text-ctex-blue"
           >
-            {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+            {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
           </button>
           <Link
             to="/login"
@@ -238,17 +238,17 @@ function Navbar({ theme, setTheme }) {
           <button
             aria-label="Toggle theme"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="flex h-9 w-9 items-center justify-center rounded-md border border-[var(--ctex-border)] text-[var(--ctex-text-muted)]"
+            className="flex h-8 w-8 items-center justify-center rounded-md border border-[var(--ctex-border)] text-[var(--ctex-text-muted)]"
           >
-            {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+            {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
           </button>
           <button
             aria-label="Open menu"
             aria-expanded={mobileOpen}
             onClick={() => setMobileOpen((v) => !v)}
-            className="flex h-9 w-9 items-center justify-center rounded-md border border-[var(--ctex-border)] text-[var(--ctex-text)]"
+            className="flex h-8 w-8 items-center justify-center rounded-md border border-[var(--ctex-border)] text-[var(--ctex-text)]"
           >
-            {mobileOpen ? <X size={18} /> : <Menu size={18} />}
+            {mobileOpen ? <X size={16} /> : <Menu size={16} />}
           </button>
         </div>
       </div>
@@ -262,7 +262,7 @@ function Navbar({ theme, setTheme }) {
             transition={{ duration: 0.2 }}
             className="overflow-hidden border-b border-[var(--ctex-border)] bg-[var(--ctex-bg)] md:hidden"
           >
-            <div className="flex flex-col gap-1 px-6 pb-5 pt-1">
+            <div className="flex flex-col gap-1 px-4 sm:px-6 pb-5 pt-1">
               {links.map((l) => (
                 <a
                   key={l.label}
@@ -333,32 +333,32 @@ const payment = await res.json();`;
         variants={reduceMotion ? undefined : container}
         initial={reduceMotion ? undefined : "hidden"}
         animate={reduceMotion ? undefined : "show"}
-        className="relative mx-auto grid max-w-7xl gap-14 px-6 pb-24 pt-16 sm:pt-24 lg:grid-cols-2 lg:items-center lg:pb-32"
+        className="relative mx-auto grid max-w-7xl gap-10 lg:gap-14 px-4 sm:px-6 pb-16 sm:pb-24 pt-12 sm:pt-24 lg:grid-cols-2 lg:items-center lg:pb-32"
       >
         <div>
           <motion.p
             variants={reduceMotion ? undefined : item}
-            className="font-mono text-[13px] text-ctex-blue dark:text-ctex-blue-light"
+            className="font-mono text-[12px] sm:text-[13px] text-ctex-blue dark:text-ctex-blue-light"
           >
             Payment infrastructure for developers
           </motion.p>
           <motion.h1
             variants={reduceMotion ? undefined : item}
-            className="mt-4 font-display text-4xl font-semibold leading-[1.08] tracking-tight text-[var(--ctex-text)] sm:text-5xl"
+            className="mt-3 sm:mt-4 font-display text-3xl sm:text-4xl md:text-5xl font-semibold leading-[1.08] tracking-tight text-[var(--ctex-text)]"
           >
             Accept payments. Build faster.
           </motion.h1>
           <motion.p
             variants={reduceMotion ? undefined : item}
-            className="mt-6 max-w-md text-base leading-relaxed text-[var(--ctex-text-muted)]"
+            className="mt-4 sm:mt-6 max-w-md text-sm sm:text-base leading-relaxed text-[var(--ctex-text-muted)]"
           >
             Accept payments, verify transactions, and automate payment
             confirmation with a simple API built for modern businesses.
           </motion.p>
-          <motion.div variants={reduceMotion ? undefined : item} className="mt-9 flex flex-wrap gap-3">
+          <motion.div variants={reduceMotion ? undefined : item} className="mt-6 sm:mt-9 flex flex-wrap gap-2 sm:gap-3">
             <Button as={Link} to="/signup">
               Get Started
-              <ArrowRight size={16} />
+              <ArrowRight size={15} />
             </Button>
             <Button as="a" href="#docs" variant="secondary">
               Read the Docs
@@ -366,7 +366,7 @@ const payment = await res.json();`;
           </motion.div>
           <motion.p
             variants={reduceMotion ? undefined : item}
-            className="mt-8 text-sm text-[var(--ctex-text-muted)]"
+            className="mt-6 sm:mt-8 text-xs sm:text-sm text-[var(--ctex-text-muted)]"
           >
             No SDK to install. Your API key is the integration.
           </motion.p>
@@ -393,11 +393,11 @@ function TrustBar() {
   ];
   return (
     <div className="border-y border-[var(--ctex-border)]">
-      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-6 py-8 sm:grid-cols-4">
+      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-4 sm:gap-6 px-4 sm:px-6 py-6 sm:py-8 sm:grid-cols-4">
         {points.map(({ icon: Icon, label }) => (
-          <div key={label} className="flex items-center gap-2.5 text-sm text-[var(--ctex-text-muted)]">
-            <Icon size={16} className="text-ctex-blue dark:text-ctex-blue-light" />
-            {label}
+          <div key={label} className="flex items-center gap-2 text-xs sm:text-sm text-[var(--ctex-text-muted)]">
+            <Icon size={14} className="shrink-0 text-ctex-blue dark:text-ctex-blue-light" />
+            <span className="truncate">{label}</span>
           </div>
         ))}
       </div>
@@ -417,7 +417,7 @@ function ProblemSolution() {
     { problem: "Difficult API management", solution: "Simple key generation and rotation" },
   ];
   return (
-    <section className="mx-auto max-w-7xl px-6 py-24">
+    <section className="mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-24">
       <Reveal>
         <SectionHeading
           eyebrow="Why C-TEX PAY"
@@ -426,13 +426,13 @@ function ProblemSolution() {
         />
       </Reveal>
 
-      <div className="mt-12 divide-y divide-[var(--ctex-border)] border-y border-[var(--ctex-border)]">
+      <div className="mt-8 sm:mt-12 divide-y divide-[var(--ctex-border)] border-y border-[var(--ctex-border)]">
         {rows.map((row, i) => (
           <Reveal key={row.problem} delay={i * 0.05}>
-            <div className="grid grid-cols-1 items-center gap-3 py-5 sm:grid-cols-[1fr_auto_1fr] sm:gap-6">
-              <p className="text-[var(--ctex-text-muted)]">{row.problem}</p>
-              <ArrowRight size={16} className="hidden text-ctex-blue sm:block" />
-              <p className="font-medium text-[var(--ctex-text)]">{row.solution}</p>
+            <div className="grid grid-cols-1 items-center gap-2 sm:gap-3 py-4 sm:py-5 sm:grid-cols-[1fr_auto_1fr] sm:gap-6">
+              <p className="text-xs sm:text-base text-[var(--ctex-text-muted)]">{row.problem}</p>
+              <ArrowRight size={14} className="hidden text-ctex-blue sm:block" />
+              <p className="text-sm sm:text-base font-medium text-[var(--ctex-text)]">{row.solution}</p>
             </div>
           </Reveal>
         ))}
@@ -460,7 +460,7 @@ function Features() {
   ];
 
   return (
-    <section id="features" className="mx-auto max-w-7xl px-6 py-24">
+    <section id="features" className="mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-24">
       <Reveal>
         <SectionHeading
           eyebrow="Everything included"
@@ -468,13 +468,13 @@ function Features() {
         />
       </Reveal>
 
-      <div className="mt-12 grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-[var(--ctex-border)] bg-[var(--ctex-border)] sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-8 sm:mt-12 grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-[var(--ctex-border)] bg-[var(--ctex-border)] sm:grid-cols-2 lg:grid-cols-3">
         {features.map((f, i) => (
           <Reveal key={f.title} delay={(i % 3) * 0.04} className="bg-[var(--ctex-bg)]">
-            <div className="h-full p-7">
-              <f.icon size={20} className="text-ctex-blue dark:text-ctex-blue-light" />
-              <p className="mt-4 font-medium text-[var(--ctex-text)]">{f.title}</p>
-              <p className="mt-1.5 text-sm leading-relaxed text-[var(--ctex-text-muted)]">
+            <div className="h-full p-5 sm:p-7">
+              <f.icon size={18} className="text-ctex-blue dark:text-ctex-blue-light" />
+              <p className="mt-3 sm:mt-4 font-medium text-sm sm:text-base text-[var(--ctex-text)]">{f.title}</p>
+              <p className="mt-1 sm:mt-1.5 text-xs sm:text-sm leading-relaxed text-[var(--ctex-text-muted)]">
                 {f.desc}
               </p>
             </div>
@@ -580,7 +580,7 @@ window.location.href = checkout_url;`,
   ];
 
   return (
-    <section id="developers" className="mx-auto max-w-7xl px-6 py-24">
+    <section id="developers" className="mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-24">
       <Reveal>
         <SectionHeading
           eyebrow="For developers"
@@ -588,18 +588,18 @@ window.location.href = checkout_url;`,
         />
       </Reveal>
 
-      <div className="mt-14 grid gap-12 lg:grid-cols-2 lg:items-start">
+      <div className="mt-10 sm:mt-14 grid gap-10 lg:gap-12 lg:grid-cols-2 lg:items-start">
         <Reveal>
           <FlowSteps steps={steps} />
         </Reveal>
 
         <Reveal delay={0.08}>
-          <div className="flex flex-wrap gap-1 border-b border-[var(--ctex-border)]">
+          <div className="flex flex-wrap gap-0.5 border-b border-[var(--ctex-border)] overflow-x-auto">
             {Object.keys(tabs).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActive(tab)}
-                className={`px-3.5 py-2.5 font-mono text-xs transition-colors ${
+                className={`px-3 sm:px-3.5 py-2 sm:py-2.5 font-mono text-[10px] sm:text-xs whitespace-nowrap transition-colors ${
                   active === tab
                     ? "border-b-2 border-ctex-blue text-ctex-blue dark:text-ctex-blue-light"
                     : "border-b-2 border-transparent text-[var(--ctex-text-muted)] hover:text-[var(--ctex-text)]"
@@ -609,7 +609,7 @@ window.location.href = checkout_url;`,
               </button>
             ))}
           </div>
-          <div className="mt-4">
+          <div className="mt-3 sm:mt-4">
             <CodeWindow label={`payments.${active === "Python" ? "py" : active === "PHP" ? "php" : active === "cURL" ? "sh" : "js"}`} lines={tabs[active]} />
           </div>
         </Reveal>
@@ -652,7 +652,7 @@ app.post("/webhooks/ctexpay", (req, res) => {
 
   return (
     <section className="border-t border-[var(--ctex-border)] bg-[var(--ctex-surface)]">
-      <div className="mx-auto max-w-7xl px-6 py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-24">
         <Reveal>
           <SectionHeading
             eyebrow="Webhooks"
@@ -661,7 +661,7 @@ app.post("/webhooks/ctexpay", (req, res) => {
           />
         </Reveal>
 
-        <div className="mt-12 grid gap-12 lg:grid-cols-2 lg:items-start">
+        <div className="mt-8 sm:mt-12 grid gap-10 lg:gap-12 lg:grid-cols-2 lg:items-start">
           <Reveal>
             <FlowSteps steps={flow} />
           </Reveal>
@@ -700,7 +700,7 @@ function SecuritySection() {
   ];
 
   return (
-    <section className="mx-auto max-w-7xl px-6 py-24">
+    <section className="mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-24">
       <Reveal>
         <SectionHeading
           eyebrow="Security"
@@ -710,23 +710,23 @@ function SecuritySection() {
       </Reveal>
 
       <Reveal delay={0.05}>
-        <div className="mt-10 flex flex-wrap items-center gap-2 overflow-x-auto rounded-lg border border-[var(--ctex-border)] bg-[var(--ctex-surface)] px-5 py-4 font-mono text-xs text-[var(--ctex-text-muted)]">
+        <div className="mt-8 sm:mt-10 flex flex-wrap items-center gap-1.5 sm:gap-2 overflow-x-auto rounded-lg border border-[var(--ctex-border)] bg-[var(--ctex-surface)] px-3 sm:px-5 py-3 sm:py-4 font-mono text-[10px] sm:text-xs text-[var(--ctex-text-muted)]">
           {pipeline.map((step, i) => (
             <React.Fragment key={step}>
-              <span className={i === 4 ? "text-ctex-blue dark:text-ctex-blue-light" : ""}>{step}</span>
-              {i < pipeline.length - 1 && <ArrowRight size={12} className="shrink-0 opacity-50" />}
+              <span className={`whitespace-nowrap ${i === 4 ? "text-ctex-blue dark:text-ctex-blue-light" : ""}`}>{step}</span>
+              {i < pipeline.length - 1 && <ArrowRight size={10} className="shrink-0 opacity-50" />}
             </React.Fragment>
           ))}
         </div>
       </Reveal>
 
-      <div className="mt-10 grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-[var(--ctex-border)] bg-[var(--ctex-border)] sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-8 sm:mt-10 grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-[var(--ctex-border)] bg-[var(--ctex-border)] sm:grid-cols-2 lg:grid-cols-4">
         {items.map((it, i) => (
           <Reveal key={it.title} delay={(i % 4) * 0.04} className="bg-[var(--ctex-bg)]">
-            <div className="h-full p-6">
-              <it.icon size={18} className="text-ctex-blue dark:text-ctex-blue-light" />
-              <p className="mt-3 text-sm font-medium text-[var(--ctex-text)]">{it.title}</p>
-              <p className="mt-1.5 text-xs leading-relaxed text-[var(--ctex-text-muted)]">{it.desc}</p>
+            <div className="h-full p-4 sm:p-6">
+              <it.icon size={16} className="text-ctex-blue dark:text-ctex-blue-light" />
+              <p className="mt-2.5 sm:mt-3 text-xs sm:text-sm font-medium text-[var(--ctex-text)]">{it.title}</p>
+              <p className="mt-1 sm:mt-1.5 text-[11px] sm:text-xs leading-relaxed text-[var(--ctex-text-muted)]">{it.desc}</p>
             </div>
           </Reveal>
         ))}
@@ -762,7 +762,7 @@ function DashboardPreview() {
   };
 
   return (
-    <section className="mx-auto max-w-7xl px-6 py-24">
+    <section className="mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-24">
       <Reveal>
         <SectionHeading
           eyebrow="Your dashboard"
@@ -772,33 +772,33 @@ function DashboardPreview() {
       </Reveal>
 
       <Reveal delay={0.08}>
-        <div className="mt-12 rounded-none border border-[var(--ctex-border)] bg-[var(--ctex-elevated)]">
+        <div className="mt-8 sm:mt-12 rounded-none border border-[var(--ctex-border)] bg-[var(--ctex-elevated)]">
           <div className="grid grid-cols-2 divide-x divide-y divide-[var(--ctex-border)] border-b border-[var(--ctex-border)] sm:grid-cols-5 sm:divide-y-0">
             {stats.map((s) => (
-              <div key={s.label} className="px-5 py-5">
-                <p className="text-xs text-[var(--ctex-text-muted)]">{s.label}</p>
-                <p className="mt-1.5 font-mono text-lg text-[var(--ctex-text)]">{s.value}</p>
+              <div key={s.label} className="px-3 sm:px-5 py-3 sm:py-5">
+                <p className="text-[10px] sm:text-xs text-[var(--ctex-text-muted)]">{s.label}</p>
+                <p className="mt-1 sm:mt-1.5 font-mono text-sm sm:text-lg text-[var(--ctex-text)]">{s.value}</p>
               </div>
             ))}
           </div>
 
           <div className="grid lg:grid-cols-[1.4fr_1fr]">
-            <div className="border-r border-[var(--ctex-border)] p-5">
-              <p className="text-sm font-medium text-[var(--ctex-text)]">Recent transactions</p>
-              <div className="mt-4 divide-y divide-[var(--ctex-border)]">
+            <div className="border-b border-[var(--ctex-border)] lg:border-b-0 lg:border-r p-4 sm:p-5">
+              <p className="text-xs sm:text-sm font-medium text-[var(--ctex-text)]">Recent transactions</p>
+              <div className="mt-3 sm:mt-4 divide-y divide-[var(--ctex-border)]">
                 {transactions.map((t) => {
                   const meta = statusMeta[t.status];
                   return (
-                    <div key={t.ref} className="flex items-center justify-between py-3">
-                      <div>
-                        <p className="font-mono text-xs text-[var(--ctex-text)]">{t.ref}</p>
-                        <p className="mt-0.5 font-mono text-[11px] text-[var(--ctex-text-muted)]">{t.customer}</p>
+                    <div key={t.ref} className="flex items-center justify-between py-2.5 sm:py-3 gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-mono text-[10px] sm:text-xs text-[var(--ctex-text)] truncate">{t.ref}</p>
+                        <p className="mt-0.5 font-mono text-[9px] sm:text-[11px] text-[var(--ctex-text-muted)] truncate">{t.customer}</p>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <span className="font-mono text-xs text-[var(--ctex-text)]">{t.amount}</span>
-                        <span className={`flex items-center gap-1 text-xs ${meta.color}`}>
-                          <meta.icon size={13} />
-                          {meta.label}
+                      <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+                        <span className="font-mono text-[10px] sm:text-xs text-[var(--ctex-text)]">{t.amount}</span>
+                        <span className={`flex items-center gap-1 text-[10px] sm:text-xs ${meta.color}`}>
+                          <meta.icon size={11} />
+                          <span className="hidden xs:inline">{meta.label}</span>
                         </span>
                       </div>
                     </div>
@@ -807,25 +807,25 @@ function DashboardPreview() {
               </div>
             </div>
 
-            <div className="p-5">
-              <p className="text-sm font-medium text-[var(--ctex-text)]">API keys</p>
-              <div className="mt-4 space-y-3">
-                <div className="flex items-center justify-between font-mono text-xs">
-                  <span className="text-[var(--ctex-text)]">sk_live_••••••••8f21</span>
-                  <span className="text-emerald-500">Active</span>
+            <div className="p-4 sm:p-5">
+              <p className="text-xs sm:text-sm font-medium text-[var(--ctex-text)]">API keys</p>
+              <div className="mt-3 sm:mt-4 space-y-2.5 sm:space-y-3">
+                <div className="flex items-center justify-between font-mono text-[10px] sm:text-xs gap-2">
+                  <span className="text-[var(--ctex-text)] truncate">sk_live_••••••••8f21</span>
+                  <span className="text-emerald-500 shrink-0">Active</span>
                 </div>
-                <div className="flex items-center justify-between font-mono text-xs">
-                  <span className="text-[var(--ctex-text)]">sk_test_••••••••1a09</span>
-                  <span className="text-[var(--ctex-text-muted)]">Test mode</span>
+                <div className="flex items-center justify-between font-mono text-[10px] sm:text-xs gap-2">
+                  <span className="text-[var(--ctex-text)] truncate">sk_test_••••••••1a09</span>
+                  <span className="text-[var(--ctex-text-muted)] shrink-0">Test mode</span>
                 </div>
               </div>
 
-              <p className="mt-6 text-sm font-medium text-[var(--ctex-text)]">Webhook status</p>
-              <div className="mt-3 flex items-center gap-2 font-mono text-xs">
-                <Circle size={8} className="fill-emerald-500 text-emerald-500" />
-                <span className="text-[var(--ctex-text)]">api.yourapp.com/webhooks/ctexpay</span>
+              <p className="mt-5 sm:mt-6 text-xs sm:text-sm font-medium text-[var(--ctex-text)]">Webhook status</p>
+              <div className="mt-2.5 sm:mt-3 flex items-center gap-2 font-mono text-[10px] sm:text-xs">
+                <Circle size={7} className="shrink-0 fill-emerald-500 text-emerald-500" />
+                <span className="text-[var(--ctex-text)] truncate">api.yourapp.com/webhooks/ctexpay</span>
               </div>
-              <p className="mt-1 text-[11px] text-[var(--ctex-text-muted)]">Last delivery succeeded</p>
+              <p className="mt-1 text-[10px] sm:text-[11px] text-[var(--ctex-text-muted)]">Last delivery succeeded</p>
             </div>
           </div>
         </div>
@@ -851,17 +851,17 @@ function MerchantFlow() {
   ];
 
   return (
-    <section id="merchant-flow" className="mx-auto max-w-7xl px-6 py-24">
+    <section id="merchant-flow" className="mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-24">
       <Reveal>
         <SectionHeading eyebrow="Merchant experience" title="From account to payout, in one flow." />
       </Reveal>
       <Reveal delay={0.06}>
-        <div className="mt-12 grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-4">
+        <div className="mt-8 sm:mt-12 grid grid-cols-2 gap-x-4 sm:gap-x-8 gap-y-6 sm:gap-y-10 sm:grid-cols-4">
           {steps.map((s, i) => (
             <div key={s.title}>
-              <span className="font-mono text-xs text-ctex-blue dark:text-ctex-blue-light">{String(i + 1).padStart(2, "0")}</span>
-              <p className="mt-2 font-medium text-[var(--ctex-text)]">{s.title}</p>
-              <p className="mt-1 text-sm text-[var(--ctex-text-muted)]">{s.desc}</p>
+              <span className="font-mono text-[10px] sm:text-xs text-ctex-blue dark:text-ctex-blue-light">{String(i + 1).padStart(2, "0")}</span>
+              <p className="mt-1.5 sm:mt-2 font-medium text-xs sm:text-base text-[var(--ctex-text)]">{s.title}</p>
+              <p className="mt-0.5 sm:mt-1 text-[11px] sm:text-sm text-[var(--ctex-text-muted)]">{s.desc}</p>
             </div>
           ))}
         </div>
@@ -874,7 +874,7 @@ function CustomerFlow() {
   const steps = ["Merchant website", "Checkout", "Customer payment", "C-TEX PAY", "Payment provider", "Verification", "Merchant webhook"];
   return (
     <section className="border-t border-[var(--ctex-border)] bg-[var(--ctex-surface)]">
-      <div className="mx-auto max-w-7xl px-6 py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-24">
         <Reveal>
           <SectionHeading
             eyebrow="Customer experience"
@@ -883,13 +883,13 @@ function CustomerFlow() {
           />
         </Reveal>
         <Reveal delay={0.06}>
-          <div className="mt-12 flex flex-wrap items-center gap-x-2 gap-y-4 font-mono text-xs text-[var(--ctex-text-muted)] sm:text-sm">
+          <div className="mt-8 sm:mt-12 flex flex-wrap items-center gap-x-1.5 sm:gap-x-2 gap-y-2 sm:gap-y-4 font-mono text-[10px] sm:text-xs text-[var(--ctex-text-muted)] md:text-sm">
             {steps.map((step, i) => (
               <React.Fragment key={step}>
-                <span className="rounded-none border border-[var(--ctex-border)] bg-[var(--ctex-elevated)] px-3 py-2 text-[var(--ctex-text)]">
+                <span className="rounded-none border border-[var(--ctex-border)] bg-[var(--ctex-elevated)] px-2 sm:px-3 py-1.5 sm:py-2 text-[var(--ctex-text)] whitespace-nowrap">
                   {step}
                 </span>
-                {i < steps.length - 1 && <ArrowRight size={14} className="opacity-50" />}
+                {i < steps.length - 1 && <ArrowRight size={12} className="shrink-0 opacity-50" />}
               </React.Fragment>
             ))}
           </div>
@@ -905,32 +905,32 @@ function CustomerFlow() {
 
 function Pricing() {
   return (
-    <section id="pricing" className="mx-auto max-w-7xl px-6 py-24">
+    <section id="pricing" className="mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-24">
       <Reveal>
         <SectionHeading eyebrow="Pricing" title="Simple, transparent transaction pricing." />
       </Reveal>
 
       <Reveal delay={0.08}>
-        <div className="mt-12 max-w-lg rounded-lg border border-[var(--ctex-border)] p-8">
-          <p className="font-display text-2xl font-semibold text-[var(--ctex-text)]">Transaction fee</p>
-          <p className="mt-2 text-sm text-[var(--ctex-text-muted)]">
+        <div className="mt-8 sm:mt-12 max-w-lg rounded-lg border border-[var(--ctex-border)] p-6 sm:p-8">
+          <p className="font-display text-xl sm:text-2xl font-semibold text-[var(--ctex-text)]">Transaction fee</p>
+          <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-[var(--ctex-text-muted)]">
             Configured by C-TEX PAY per merchant. No setup fees, no monthly minimums.
           </p>
-          <ul className="mt-6 space-y-3 text-sm text-[var(--ctex-text-muted)]">
+          <ul className="mt-5 sm:mt-6 space-y-2.5 sm:space-y-3 text-xs sm:text-sm text-[var(--ctex-text-muted)]">
             <li className="flex items-center gap-2">
-              <CheckCircle2 size={15} className="text-ctex-blue dark:text-ctex-blue-light" />
+              <CheckCircle2 size={14} className="shrink-0 text-ctex-blue dark:text-ctex-blue-light" />
               Pay only for successful transactions
             </li>
             <li className="flex items-center gap-2">
-              <CheckCircle2 size={15} className="text-ctex-blue dark:text-ctex-blue-light" />
+              <CheckCircle2 size={14} className="shrink-0 text-ctex-blue dark:text-ctex-blue-light" />
               No hidden integration costs
             </li>
             <li className="flex items-center gap-2">
-              <CheckCircle2 size={15} className="text-ctex-blue dark:text-ctex-blue-light" />
+              <CheckCircle2 size={14} className="shrink-0 text-ctex-blue dark:text-ctex-blue-light" />
               Full access to the dashboard and API
             </li>
           </ul>
-          <Button as={Link} to="/signup" className="mt-8 w-full">
+          <Button as={Link} to="/signup" className="mt-6 sm:mt-8 w-full">
             Get Started
           </Button>
         </div>
@@ -946,16 +946,16 @@ function Pricing() {
 function DocsCTA() {
   return (
     <section id="docs" className="border-t border-[var(--ctex-border)] bg-[var(--ctex-surface)]">
-      <div className="mx-auto grid max-w-7xl gap-10 px-6 py-24 lg:grid-cols-2 lg:items-center">
+      <div className="mx-auto grid max-w-7xl gap-8 sm:gap-10 px-4 sm:px-6 py-16 sm:py-24 lg:grid-cols-2 lg:items-center">
         <Reveal>
-          <p className="font-mono text-[13px] text-ctex-blue dark:text-ctex-blue-light">Documentation</p>
-          <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-[var(--ctex-text)] sm:text-4xl">
+          <p className="font-mono text-[12px] sm:text-[13px] text-ctex-blue dark:text-ctex-blue-light">Documentation</p>
+          <h2 className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight text-[var(--ctex-text)]">
             Ready to integrate?
           </h2>
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-6 sm:mt-8 flex flex-wrap gap-2 sm:gap-3">
             <Button as="a" href="/docs">
               Read Documentation
-              <ArrowRight size={16} />
+              <ArrowRight size={15} />
             </Button>
             <Button as={Link} to="/signup" variant="secondary">
               Create Account
@@ -993,12 +993,12 @@ function FAQ() {
   const [open, setOpen] = useState(0);
 
   return (
-    <section className="mx-auto max-w-4xl px-6 py-24">
+    <section className="mx-auto max-w-4xl px-4 sm:px-6 py-16 sm:py-24">
       <Reveal>
         <SectionHeading eyebrow="FAQ" title="Common questions." />
       </Reveal>
 
-      <div className="mt-10 divide-y divide-[var(--ctex-border)] border-y border-[var(--ctex-border)]">
+      <div className="mt-8 sm:mt-10 divide-y divide-[var(--ctex-border)] border-y border-[var(--ctex-border)]">
         {faqs.map((f, i) => {
           const isOpen = open === i;
           return (
@@ -1006,11 +1006,11 @@ function FAQ() {
               <button
                 onClick={() => setOpen(isOpen ? -1 : i)}
                 aria-expanded={isOpen}
-                className="flex w-full items-center justify-between gap-4 py-5 text-left"
+                className="flex w-full items-center justify-between gap-3 sm:gap-4 py-4 sm:py-5 text-left"
               >
-                <span className="font-medium text-[var(--ctex-text)]">{f.q}</span>
+                <span className="text-sm sm:text-base font-medium text-[var(--ctex-text)]">{f.q}</span>
                 <ChevronDown
-                  size={16}
+                  size={14}
                   className={`shrink-0 text-[var(--ctex-text-muted)] transition-transform duration-200 ${
                     isOpen ? "rotate-180" : ""
                   }`}
@@ -1025,7 +1025,7 @@ function FAQ() {
                     transition={{ duration: 0.2 }}
                     className="overflow-hidden"
                   >
-                    <p className="pb-5 text-sm leading-relaxed text-[var(--ctex-text-muted)]">{f.a}</p>
+                    <p className="pb-4 sm:pb-5 text-xs sm:text-sm leading-relaxed text-[var(--ctex-text-muted)]">{f.a}</p>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -1044,18 +1044,18 @@ function FAQ() {
 function FinalCTA() {
   return (
     <section className="border-t border-[var(--ctex-border)]">
-      <div className="mx-auto max-w-7xl px-6 py-24 text-center">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-24 text-center">
         <Reveal>
-          <h2 className="mx-auto max-w-2xl font-display text-3xl font-semibold tracking-tight text-[var(--ctex-text)] sm:text-4xl">
+          <h2 className="mx-auto max-w-2xl font-display text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight text-[var(--ctex-text)]">
             Your payments. Your API. Your business.
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-base text-[var(--ctex-text-muted)]">
+          <p className="mx-auto mt-3 sm:mt-4 max-w-xl text-sm sm:text-base text-[var(--ctex-text-muted)]">
             Build your payment flow with infrastructure designed around developers.
           </p>
-          <div className="mt-9 flex flex-wrap justify-center gap-3">
+          <div className="mt-7 sm:mt-9 flex flex-wrap justify-center gap-2 sm:gap-3">
             <Button as={Link} to="/signup">
               Get Started
-              <ArrowRight size={16} />
+              <ArrowRight size={15} />
             </Button>
             <Button as="a" href="#docs" variant="secondary">
               Explore Documentation
@@ -1081,15 +1081,15 @@ function Footer() {
 
   return (
     <footer className="border-t border-[var(--ctex-border)]">
-      <div className="mx-auto max-w-7xl px-6 py-16">
-        <div className="grid grid-cols-2 gap-10 sm:grid-cols-4">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12 sm:py-16">
+        <div className="grid grid-cols-2 gap-8 sm:gap-10 sm:grid-cols-4">
           {columns.map((col) => (
             <div key={col.title}>
-              <p className="text-sm font-medium text-[var(--ctex-text)]">{col.title}</p>
-              <ul className="mt-4 space-y-2.5">
+              <p className="text-xs sm:text-sm font-medium text-[var(--ctex-text)]">{col.title}</p>
+              <ul className="mt-3 sm:mt-4 space-y-2 sm:space-y-2.5">
                 {col.links.map((link) => (
                   <li key={link}>
-                    <a href="#" className="text-sm text-[var(--ctex-text-muted)] hover:text-ctex-blue">
+                    <a href="#" className="text-xs sm:text-sm text-[var(--ctex-text-muted)] hover:text-ctex-blue">
                       {link}
                     </a>
                   </li>
@@ -1099,11 +1099,11 @@ function Footer() {
           ))}
         </div>
 
-        <div className="mt-14 flex flex-col items-start justify-between gap-4 border-t border-[var(--ctex-border)] pt-8 sm:flex-row sm:items-center">
-          <span className="font-display text-sm font-semibold text-[var(--ctex-text)]">
+        <div className="mt-10 sm:mt-14 flex flex-col items-start justify-between gap-3 sm:gap-4 border-t border-[var(--ctex-border)] pt-6 sm:pt-8 sm:flex-row sm:items-center">
+          <span className="font-display text-xs sm:text-sm font-semibold text-[var(--ctex-text)]">
             C-TEX <span className="text-ctex-blue">PAY</span>
           </span>
-          <p className="text-xs text-[var(--ctex-text-muted)]">© 2026 C-TEX PAY. All rights reserved.</p>
+          <p className="text-[10px] sm:text-xs text-[var(--ctex-text-muted)]">© 2026 C-TEX PAY. All rights reserved.</p>
         </div>
       </div>
     </footer>
