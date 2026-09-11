@@ -344,7 +344,7 @@ const payment = await res.json();`;
           </motion.p>
           <motion.h1
             variants={reduceMotion ? undefined : item}
-            className="mt-3 sm:mt-4 font-display text-3xl sm:text-4xl md:text-5xl font-semibold leading-[1.08] tracking-tight text-[var(--ctex-text)]"
+            className="mt-3 sm:mt-4 font-display text-5xl sm:text-7xl md:text-7xl font-semibold leading-[1.08] tracking-tight text-[var(--ctex-text)]"
           >
             Accept payments. Build faster.
           </motion.h1>
