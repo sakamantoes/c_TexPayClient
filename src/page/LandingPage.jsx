@@ -26,180 +26,6 @@ import {
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
-/* Cartoon / illustration primitives (additive only)                   */
-/* ------------------------------------------------------------------ */
-
-/* A friendly cartoon credit card that tilts and floats slightly. */
-function CartoonCard({ className = "" }) {
-  const reduceMotion = useReducedMotion();
-  return (
-    <motion.svg
-      viewBox="0 0 120 80"
-      className={className}
-      animate={reduceMotion ? undefined : { y: [0, -6, 0], rotate: [-3, 3, -3] }}
-      transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-      aria-hidden
-    >
-      <rect x="4" y="10" width="112" height="66" rx="10" fill="var(--ctex-blue)" opacity="0.9" />
-      <rect x="4" y="24" width="112" height="10" fill="rgba(0,0,0,0.25)" />
-      <rect x="14" y="46" width="34" height="18" rx="4" fill="rgba(255,255,255,0.85)" />
-      <circle cx="24" cy="55" r="4" fill="#f59e0b" />
-      <circle cx="32" cy="55" r="4" fill="#fbbf24" />
-      <rect x="58" y="52" width="48" height="4" rx="2" fill="rgba(255,255,255,0.6)" />
-      <rect x="58" y="60" width="30" height="4" rx="2" fill="rgba(255,255,255,0.4)" />
-    </motion.svg>
-  );
-}
-
-/* A cartoon coin with a naira/currency glyph. */
-function CartoonCoin({ className = "", delay = 0 }) {
-  const reduceMotion = useReducedMotion();
-  return (
-    <motion.svg
-      viewBox="0 0 64 64"
-      className={className}
-      animate={reduceMotion ? undefined : { rotateY: [0, 360] }}
-      transition={{ duration: 8, repeat: Infinity, ease: "linear", delay }}
-      aria-hidden
-    >
-      <circle cx="32" cy="32" r="28" fill="#f59e0b" />
-      <circle cx="32" cy="32" r="22" fill="#fbbf24" />
-      <text
-        x="32"
-        y="41"
-        textAnchor="middle"
-        fontSize="26"
-        fontWeight="700"
-        fill="#92400e"
-        fontFamily="monospace"
-      >
-        ₦
-      </text>
-    </motion.svg>
-  );
-}
-
-/* A cartoon wallet with money peeking out. */
-function CartoonWallet({ className = "" }) {
-  const reduceMotion = useReducedMotion();
-  return (
-    <motion.svg
-      viewBox="0 0 120 90"
-      className={className}
-      animate={reduceMotion ? undefined : { rotate: [-2, 2, -2] }}
-      transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-      aria-hidden
-    >
-      <rect x="10" y="24" width="100" height="60" rx="10" fill="#0b68ad" />
-      <rect x="10" y="34" width="100" height="50" rx="10" fill="#1e7fc4" />
-      <rect x="78" y="50" width="34" height="20" rx="6" fill="#fbbf24" />
-      <circle cx="95" cy="60" r="4" fill="#92400e" />
-      <rect x="20" y="14" width="60" height="18" rx="4" fill="#34d399" />
-      <rect x="24" y="18" width="52" height="10" rx="2" fill="#10b981" />
-    </motion.svg>
-  );
-}
-
-/* A tiny cartoon receipt with a checkmark. */
-function CartoonReceipt({ className = "" }) {
-  const reduceMotion = useReducedMotion();
-  return (
-    <motion.svg
-      viewBox="0 0 80 100"
-      className={className}
-      animate={reduceMotion ? undefined : { y: [0, -4, 0] }}
-      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-      aria-hidden
-    >
-      <path
-        d="M10 8 h60 v84 l-10 -6 -10 6 -10 -6 -10 6 -10 -6 -10 6 z"
-        fill="#ffffff"
-        stroke="var(--ctex-border)"
-        strokeWidth="2"
-      />
-      <rect x="22" y="24" width="36" height="4" rx="2" fill="#94a3b8" />
-      <rect x="22" y="34" width="28" height="4" rx="2" fill="#cbd5e1" />
-      <rect x="22" y="44" width="32" height="4" rx="2" fill="#cbd5e1" />
-      <rect x="22" y="54" width="20" height="4" rx="2" fill="#cbd5e1" />
-      <circle cx="52" cy="74" r="12" fill="#10b981" />
-      <path
-        d="M46 74 l4 4 l8 -8"
-        stroke="#ffffff"
-        strokeWidth="2.5"
-        fill="none"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </motion.svg>
-  );
-}
-
-/* A cartoon piggy bank — symbolises savings / merchant wallet. */
-function CartoonPiggy({ className = "" }) {
-  const reduceMotion = useReducedMotion();
-  return (
-    <motion.svg
-      viewBox="0 0 120 100"
-      className={className}
-      animate={reduceMotion ? undefined : { scale: [1, 1.03, 1] }}
-      transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-      aria-hidden
-    >
-      <ellipse cx="60" cy="58" rx="44" ry="32" fill="#f9a8d4" />
-      <ellipse cx="60" cy="58" rx="44" ry="32" fill="none" stroke="#ec4899" strokeWidth="2" />
-      <circle cx="98" cy="52" r="8" fill="#f472b6" />
-      <circle cx="98" cy="52" r="4" fill="#be185d" />
-      <circle cx="46" cy="46" r="4" fill="#831843" />
-      <rect x="52" y="18" width="16" height="6" rx="2" fill="#be185d" />
-      <rect x="30" y="82" width="10" height="12" rx="3" fill="#be185d" />
-      <rect x="80" y="82" width="10" height="12" rx="3" fill="#be185d" />
-    </motion.svg>
-  );
-}
-
-/* A cartoon smartphone showing a payment success screen. */
-function CartoonPhone({ className = "" }) {
-  const reduceMotion = useReducedMotion();
-  return (
-    <motion.svg
-      viewBox="0 0 80 140"
-      className={className}
-      animate={reduceMotion ? undefined : { y: [0, -5, 0] }}
-      transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-      aria-hidden
-    >
-      <rect x="6" y="6" width="68" height="128" rx="12" fill="#0f172a" />
-      <rect x="10" y="14" width="60" height="112" rx="8" fill="#e2e8f0" />
-      <circle cx="40" cy="30" r="10" fill="#10b981" />
-      <path
-        d="M35 30 l4 4 l7 -7"
-        stroke="#ffffff"
-        strokeWidth="2.5"
-        fill="none"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <rect x="20" y="50" width="40" height="5" rx="2.5" fill="#94a3b8" />
-      <rect x="24" y="62" width="32" height="5" rx="2.5" fill="#cbd5e1" />
-      <rect x="28" y="74" width="24" height="5" rx="2.5" fill="#cbd5e1" />
-      <rect x="18" y="96" width="44" height="14" rx="7" fill="#0b68ad" />
-      <rect x="24" y="102" width="32" height="2" rx="1" fill="rgba(255,255,255,0.7)" />
-    </motion.svg>
-  );
-}
-
-/* A small floating coin burst — decorative accent. */
-function CoinBurst({ className = "" }) {
-  return (
-    <div className={`pointer-events-none ${className}`} aria-hidden>
-      <CartoonCoin className="absolute h-8 w-8" delay={0} />
-      <CartoonCoin className="absolute left-10 top-6 h-6 w-6" delay={1.5} />
-      <CartoonCoin className="absolute left-4 top-12 h-5 w-5" delay={3} />
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
 /* Theme                                                               */
 /* ------------------------------------------------------------------ */
 
@@ -285,6 +111,9 @@ function Button({ as = "button", variant = "primary", children, className = "", 
   );
 }
 
+/* A code panel: sharp corners, monospace, terminal-like — deliberately
+   distinct from the soft rounded content cards used elsewhere, so the
+   eye learns "this square-edged, mono-typeset block is real system output." */
 function CodeWindow({ label = "request.js", lines }) {
   return (
     <div className="rounded-none border border-[var(--ctex-border)] bg-[var(--ctex-elevated)] shadow-[0_24px_60px_-24px_rgba(11,104,173,0.35)]">
@@ -303,6 +132,9 @@ function CodeWindow({ label = "request.js", lines }) {
   );
 }
 
+/* Reusable flow diagram — the product's core mental model is a linear
+   sequence (account → key → integrate → webhook), so one component
+   renders it consistently instead of four bespoke diagrams. */
 function FlowSteps({ steps, orientation = "vertical" }) {
   const isRow = orientation === "horizontal";
   return (
@@ -367,12 +199,8 @@ function Navbar({ theme, setTheme }) {
       }`}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <Link to="/" className="flex items-center gap-2 font-display text-lg font-semibold tracking-tight text-[var(--ctex-text)]">
-          {/* ADDED: tiny cartoon card mark next to brand */}
-          <CartoonCard className="h-7 w-10" />
-          <span>
-            C-TEX <span className="text-ctex-blue">PAY</span>
-          </span>
+        <Link to="/" className="font-display text-lg font-semibold tracking-tight text-[var(--ctex-text)]">
+          C-TEX <span className="text-ctex-blue">PAY</span>
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
@@ -542,23 +370,9 @@ const payment = await res.json();`;
           >
             No SDK to install. Your API key is the integration.
           </motion.p>
-
-          {/* ADDED: cartoon payment symbols floating below hero copy */}
-          <motion.div
-            variants={reduceMotion ? undefined : item}
-            className="mt-10 flex items-end gap-6"
-            aria-hidden
-          >
-            <CartoonWallet className="h-20 w-28" />
-            <CartoonPhone className="h-24 w-14" />
-            <CartoonCoin className="h-12 w-12" />
-          </motion.div>
         </div>
 
-        <motion.div variants={reduceMotion ? undefined : item} className="relative">
-          {/* ADDED: cartoon card overlapping the code window */}
-          <CartoonCard className="absolute -top-10 -left-10 z-10 hidden h-20 w-32 sm:block" />
-          <CartoonReceipt className="absolute -bottom-10 -right-6 z-10 hidden h-24 w-20 sm:block" />
+        <motion.div variants={reduceMotion ? undefined : item}>
           <CodeWindow label="payments.js" lines={codeLines} />
         </motion.div>
       </motion.div>
@@ -779,9 +593,7 @@ window.location.href = checkout_url;`,
           <FlowSteps steps={steps} />
         </Reveal>
 
-        <Reveal delay={0.08} className="relative">
-          {/* ADDED: cartoon coin cluster floating near the code tabs */}
-          <CoinBurst className="absolute -top-10 right-0 z-10 hidden sm:block" />
+        <Reveal delay={0.08}>
           <div className="flex flex-wrap gap-1 border-b border-[var(--ctex-border)]">
             {Object.keys(tabs).map((tab) => (
               <button
@@ -853,9 +665,7 @@ app.post("/webhooks/ctexpay", (req, res) => {
           <Reveal>
             <FlowSteps steps={flow} />
           </Reveal>
-          <Reveal delay={0.08} className="relative">
-            {/* ADDED: cartoon receipt peeking above webhook code */}
-            <CartoonReceipt className="absolute -top-12 -right-4 z-10 hidden h-24 w-20 sm:block" />
+          <Reveal delay={0.08}>
             <CodeWindow label="webhooks.js" lines={webhookCode} />
           </Reveal>
         </div>
@@ -961,14 +771,8 @@ function DashboardPreview() {
         />
       </Reveal>
 
-      <Reveal delay={0.08} className="relative">
-        {/* ADDED: piggy bank + wallet + coin trio above the dashboard preview */}
-        <div className="mb-6 flex items-end justify-center gap-6 sm:justify-end" aria-hidden>
-          <CartoonPiggy className="h-20 w-24" />
-          <CartoonWallet className="h-16 w-24" />
-          <CartoonCoin className="h-10 w-10" />
-        </div>
-        <div className="mt-0 rounded-none border border-[var(--ctex-border)] bg-[var(--ctex-elevated)]">
+      <Reveal delay={0.08}>
+        <div className="mt-12 rounded-none border border-[var(--ctex-border)] bg-[var(--ctex-elevated)]">
           <div className="grid grid-cols-2 divide-x divide-y divide-[var(--ctex-border)] border-b border-[var(--ctex-border)] sm:grid-cols-5 sm:divide-y-0">
             {stats.map((s) => (
               <div key={s.label} className="px-5 py-5">
@@ -1107,9 +911,7 @@ function Pricing() {
       </Reveal>
 
       <Reveal delay={0.08}>
-        <div className="mt-12 max-w-lg rounded-lg border border-[var(--ctex-border)] p-8 relative">
-          {/* ADDED: cartoon coin sitting in the corner of the pricing card */}
-          <CartoonCoin className="absolute -top-6 -right-6 hidden h-14 w-14 sm:block" />
+        <div className="mt-12 max-w-lg rounded-lg border border-[var(--ctex-border)] p-8">
           <p className="font-display text-2xl font-semibold text-[var(--ctex-text)]">Transaction fee</p>
           <p className="mt-2 text-sm text-[var(--ctex-text-muted)]">
             Configured by C-TEX PAY per merchant. No setup fees, no monthly minimums.
@@ -1160,12 +962,7 @@ function DocsCTA() {
             </Button>
           </div>
         </Reveal>
-        <Reveal delay={0.08} className="relative">
-          {/* ADDED: wallet + phone pair next to docs quickstart */}
-          <div className="absolute -top-16 right-0 z-10 hidden items-end gap-4 sm:flex" aria-hidden>
-            <CartoonWallet className="h-16 w-24" />
-            <CartoonPhone className="h-24 w-14" />
-          </div>
+        <Reveal delay={0.08}>
           <CodeWindow
             label="quickstart.sh"
             lines={`curl https://api.ctexpay.com/v1/payments \\
@@ -1249,13 +1046,6 @@ function FinalCTA() {
     <section className="border-t border-[var(--ctex-border)]">
       <div className="mx-auto max-w-7xl px-6 py-24 text-center">
         <Reveal>
-          {/* ADDED: cartoon cluster above the final CTA headline */}
-          <div className="mb-10 flex items-end justify-center gap-6" aria-hidden>
-            <CartoonCard className="h-16 w-24" />
-            <CartoonWallet className="h-20 w-28" />
-            <CartoonPiggy className="h-20 w-24" />
-            <CartoonReceipt className="h-20 w-16" />
-          </div>
           <h2 className="mx-auto max-w-2xl font-display text-3xl font-semibold tracking-tight text-[var(--ctex-text)] sm:text-4xl">
             Your payments. Your API. Your business.
           </h2>
@@ -1310,12 +1100,8 @@ function Footer() {
         </div>
 
         <div className="mt-14 flex flex-col items-start justify-between gap-4 border-t border-[var(--ctex-border)] pt-8 sm:flex-row sm:items-center">
-          {/* ADDED: cartoon card mark next to footer brand */}
-          <span className="flex items-center gap-2 font-display text-sm font-semibold text-[var(--ctex-text)]">
-            <CartoonCard className="h-6 w-9" />
-            <span>
-              C-TEX <span className="text-ctex-blue">PAY</span>
-            </span>
+          <span className="font-display text-sm font-semibold text-[var(--ctex-text)]">
+            C-TEX <span className="text-ctex-blue">PAY</span>
           </span>
           <p className="text-xs text-[var(--ctex-text-muted)]">© 2026 C-TEX PAY. All rights reserved.</p>
         </div>
