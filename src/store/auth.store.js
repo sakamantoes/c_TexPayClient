@@ -178,6 +178,19 @@ export const useAuthStore = create(
         }
       },
 
+      resendVerification: async (email) => {
+  set({ isLoading: true, error: null });
+  try {
+    const res = await authService.resendVerification(email);
+    set({ isLoading: false });
+    return { success: true, message: res.message };
+  } catch (err) {
+    const message = err.response?.data?.message || "Failed to resend email";
+    set({ isLoading: false, error: message });
+    return { success: false, message };
+  }
+},
+
       /*
       |--------------------------------------------------------------------------
       | CHANGE PASSWORD

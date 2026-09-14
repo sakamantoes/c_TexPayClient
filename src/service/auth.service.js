@@ -54,6 +54,11 @@ export const authService = {
     return { success: true };
   },
 
+  resendVerification: async (email) => {
+  const { data } = await api.post("/auth/resend-verification", { email });
+  return data;
+},
+
   /**
    * Get current authenticated user
    * GET /auth/me

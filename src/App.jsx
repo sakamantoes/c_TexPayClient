@@ -17,6 +17,8 @@ import SuperAdminDashboard from "./page/SuperAdminDashboard/SuperAdminDashboard.
 import { useAuthStore } from "./store/auth.store";
 import { getDashboardPath } from "./utils/role.js";
 import { FullScreenLoader } from "./components/Spin.jsx";
+import VerifyEmailPage from "./page/VerifyEmailPage.jsx";
+import VerifyEmailSentPage from "./page/VerifyEmailSentPage.jsx";
 
 const DashboardRouter = () => {
   const { user } = useAuthStore();
@@ -46,6 +48,8 @@ const AppRoutes = () => {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<RegisterPage />} />
       <Route path="/dashboard" element={<DashboardRouter />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+<Route path="/verify-email-sent" element={<VerifyEmailSentPage />} />
 
       <Route
         path="/merchant/dashboard"
