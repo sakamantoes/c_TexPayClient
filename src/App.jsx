@@ -16,6 +16,7 @@ import AdminDashboard from "./page/AdminDashboard/AdminDashboard.jsx";
 import SuperAdminDashboard from "./page/SuperAdminDashboard/SuperAdminDashboard.jsx";
 import { useAuthStore } from "./store/auth.store";
 import { getDashboardPath } from "./utils/role.js";
+import { FullScreenLoader } from "./components/Spin.jsx";
 
 const DashboardRouter = () => {
   const { user } = useAuthStore();
@@ -34,7 +35,7 @@ const AppRoutes = () => {
   if (!initialized) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg font-medium text-slate-700">Loading session...</p>
+        <FullScreenLoader />
       </div>
     );
   }

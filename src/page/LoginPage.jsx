@@ -51,7 +51,7 @@ export default function LoginPage() {
         <>
           Don&apos;t have an account?{" "}
           <Link
-            to="/register"
+            to="/signup"
             className="font-medium text-ctex-blue hover:text-ctex-blue-light hover:underline"
           >
             Create one
