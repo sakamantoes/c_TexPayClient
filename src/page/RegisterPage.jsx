@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "react-toastify";
 import { useAuthStore } from "../store/auth.store";
 import AuthLayout from "../components/auth/AuthLayout";
 import TextField from "../components/auth/TextField";
@@ -58,10 +59,14 @@ export default function RegisterPage() {
     const res = await register(payload);
 
     if (res.success) {
+      toast.success("Account created successfully. Verify your email to continue.");
       navigate("/verify-email-sent", {
         state: { email: payload.email },
       });
+      return;
     }
+
+    toast.error(res.message || "Registration failed. Please try again.");
   };
 
   const displayError = localError || error;

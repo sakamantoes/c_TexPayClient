@@ -61,13 +61,20 @@ export default function AuthLayout({ title, subtitle, children, footer }) {
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="w-full max-w-md"
         >
-          <div className="mb-6 text-center">
+          <div className="mb-6 flex items-center justify-between gap-3 text-center">
             <Link
               to="/"
               className="inline-flex items-center gap-2 text-sm font-medium text-ctex-text-muted transition hover:text-ctex-blue"
             >
               <span className="inline-block h-2 w-2 rounded-full bg-ctex-blue" />
               C-TEX PAY
+            </Link>
+
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1.5 rounded-full border border-ctex-border bg-ctex-surface px-3 py-1.5 text-xs font-medium text-ctex-text-muted transition hover:border-ctex-blue hover:text-ctex-blue"
+            >
+              ← Back to Home
             </Link>
           </div>
 

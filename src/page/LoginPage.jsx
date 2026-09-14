@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "react-toastify";
 import { useAuthStore } from "../store/auth.store";
 import { getDashboardPath } from "../utils/role";
 import AuthLayout from "../components/auth/AuthLayout";
@@ -37,8 +38,12 @@ export default function LoginPage() {
 
     if (res.success) {
       const nextUser = res?.data?.user || useAuthStore.getState().user;
+      toast.success("Login successful! Redirecting to your dashboard.");
       navigate(getDashboardPath(nextUser), { replace: true });
+      return;
     }
+
+    toast.error(res.message || "Login failed. Please try again.");
   };
 
   const displayError = localError || error;
