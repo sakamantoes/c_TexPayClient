@@ -61,7 +61,8 @@ function Reveal({ children, delay = 0, className = "" }) {
       initial={{ opacity: 0, y: 10 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
-      transition={{ duration: 0.5, delay, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.4, delay, ease: [0.16, 1, 0.3, 1] }}
+      style={{ willChange: "transform, opacity" }}
     >
       {children}
     </motion.div>
@@ -113,10 +114,18 @@ function Button({ as = "button", variant = "primary", children, className = "", 
 
 /* A code panel: sharp corners, monospace, terminal-like — deliberately
    distinct from the soft rounded content cards used elsewhere, so the
-   eye learns "this square-edged, mono-typeset block is real system output." */
-function CodeWindow({ label = "request.js", lines }) {
+   eye learns "this square-edged, mono-typeset block is real system output."
+   Shadow kept small (no large blur radius) — big soft shadows are a real
+   compositing cost on low-end Android GPUs. */
+function CodeWindow({ label = "request.js", lines, accent = false }) {
   return (
-    <div className="w-full max-w-full overflow-hidden rounded-none border border-[var(--ctex-border)] bg-[var(--ctex-elevated)] shadow-[0_24px_60px_-24px_rgba(11,104,173,0.35)]">
+    <div
+      className={`relative w-full max-w-full overflow-hidden rounded-none border bg-[var(--ctex-elevated)] ${
+        accent
+          ? "border-ctex-blue/30 shadow-[0_8px_24px_-8px_rgba(11,104,173,0.3)]"
+          : "border-[var(--ctex-border)] shadow-sm"
+      }`}
+    >
       <div className="flex items-center justify-between border-b border-[var(--ctex-border)] px-3 sm:px-4 py-2 sm:py-2.5">
         <div className="flex items-center gap-1.5">
           <span className="h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-[var(--ctex-border)]" />
@@ -129,6 +138,28 @@ function CodeWindow({ label = "request.js", lines }) {
         <code className="block min-w-0 whitespace-pre-wrap break-words">{lines}</code>
       </pre>
     </div>
+  );
+}
+
+/* Lightweight hero accent badges — transform/opacity only, entrance-only
+   (no looping animation), no images, no filters. Communicates "verified,
+   real-time" without the GPU cost of 3D renders or large raster assets. */
+function HeroStatusBadge({ icon: Icon, label, tone = "success", delay = 0, className = "" }) {
+  const reduceMotion = useReducedMotion();
+  const toneClasses =
+    tone === "success"
+      ? "text-emerald-500 border-emerald-500/25"
+      : "text-ctex-blue dark:text-ctex-blue-light border-ctex-blue/25";
+  return (
+    <motion.div
+      initial={reduceMotion ? undefined : { opacity: 0, y: 8, scale: 0.97 }}
+      animate={reduceMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.35, delay, ease: [0.16, 1, 0.3, 1] }}
+      className={`pointer-events-none flex items-center gap-1.5 rounded-md border bg-[var(--ctex-elevated)] px-2.5 py-1.5 font-mono text-[10px] sm:text-[11px] shadow-sm ${toneClasses} ${className}`}
+    >
+      <Icon size={12} className="shrink-0" />
+      <span className="whitespace-nowrap">{label}</span>
+    </motion.div>
   );
 }
 
@@ -178,7 +209,7 @@ function Navbar({ theme, setTheme }) {
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
-    window.addEventListener("scroll", onScroll);
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
@@ -194,8 +225,8 @@ function Navbar({ theme, setTheme }) {
     <header
       className={`sticky top-0 z-50 transition-colors duration-200 ${
         scrolled
-          ? "border-b border-[var(--ctex-border)] bg-[var(--ctex-bg)]/85 backdrop-blur"
-          : "border-b border-transparent bg-transparent"
+          ? "border-b border-[var(--ctex-border)] bg-[var(--ctex-bg)]"
+          : "border-b border-transparent bg-[var(--ctex-bg)]"
       }`}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
@@ -259,7 +290,7 @@ function Navbar({ theme, setTheme }) {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.18 }}
             className="overflow-hidden border-b border-[var(--ctex-border)] bg-[var(--ctex-bg)] md:hidden"
           >
             <div className="flex flex-col gap-1 px-4 sm:px-6 pb-5 pt-1">
@@ -314,48 +345,43 @@ function Hero() {
 
 const payment = await res.json();`;
 
-  const container = {
-    hidden: {},
-    show: { transition: { staggerChildren: 0.12, delayChildren: 0.05 } },
-  };
-  const item = {
+  // Two animated groups instead of six — one orchestrated load moment,
+  // not a per-element stagger chain. Cheaper to composite on low-end GPUs.
+  const textBlock = {
     hidden: { opacity: 0, y: 14 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] } },
+    show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } },
+  };
+  const codeBlock = {
+    hidden: { opacity: 0, y: 14 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.5, delay: 0.12, ease: [0.16, 1, 0.3, 1] } },
   };
 
   return (
     <section className="relative overflow-hidden">
+      {/* Cheap flat gradient wash instead of a large filter:blur() glow —
+          blur() forces an expensive offscreen render pass on mobile GPUs;
+          a gradient is composited for free. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -top-40 left-1/2 h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-ctex-blue/20 blur-[140px] dark:bg-ctex-blue/25"
+        className="pointer-events-none absolute -top-24 left-1/2 h-[380px] w-full max-w-[900px] -translate-x-1/2 bg-[radial-gradient(closest-side,hsl(205.56deg_88.04%_36.08%_/_0.16),transparent)] dark:bg-[radial-gradient(closest-side,hsl(205.56deg_88.04%_46%_/_0.22),transparent)]"
       />
-      <motion.div
-        variants={reduceMotion ? undefined : container}
-        initial={reduceMotion ? undefined : "hidden"}
-        animate={reduceMotion ? undefined : "show"}
-        className="relative mx-auto grid max-w-7xl gap-10 lg:gap-14 px-4 sm:px-6 pb-16 sm:pb-24 pt-12 sm:pt-24 lg:grid-cols-2 lg:items-center lg:pb-32"
-      >
-        <div>
-          <motion.p
-            variants={reduceMotion ? undefined : item}
-            className="font-mono text-[12px] sm:text-[13px] text-ctex-blue dark:text-ctex-blue-light"
-          >
+      <div className="relative mx-auto grid max-w-7xl gap-10 lg:gap-14 px-4 sm:px-6 pb-16 sm:pb-24 pt-12 sm:pt-24 lg:grid-cols-2 lg:items-center lg:pb-32">
+        <motion.div
+          initial={reduceMotion ? undefined : "hidden"}
+          animate={reduceMotion ? undefined : "show"}
+          variants={reduceMotion ? undefined : textBlock}
+        >
+          <p className="font-mono text-[12px] sm:text-[13px] text-ctex-blue dark:text-ctex-blue-light">
             Payment infrastructure for developers
-          </motion.p>
-          <motion.h1
-            variants={reduceMotion ? undefined : item}
-            className="mt-3 sm:mt-4 font-display text-5xl sm:text-7xl md:text-7xl font-semibold leading-[1.08] tracking-tight text-[var(--ctex-text)]"
-          >
+          </p>
+          <h1 className="mt-3 sm:mt-4 font-display text-5xl sm:text-7xl md:text-7xl font-semibold leading-[1.08] tracking-tight text-[var(--ctex-text)]">
             Accept payments. Build faster.
-          </motion.h1>
-          <motion.p
-            variants={reduceMotion ? undefined : item}
-            className="mt-4 sm:mt-6 max-w-md text-sm sm:text-base leading-relaxed text-[var(--ctex-text-muted)]"
-          >
+          </h1>
+          <p className="mt-4 sm:mt-6 max-w-md text-sm sm:text-base leading-relaxed text-[var(--ctex-text-muted)]">
             Accept payments, verify transactions, and automate payment
             confirmation with a simple API built for modern businesses.
-          </motion.p>
-          <motion.div variants={reduceMotion ? undefined : item} className="mt-6 sm:mt-9 flex flex-wrap gap-2 sm:gap-3">
+          </p>
+          <div className="mt-6 sm:mt-9 flex flex-wrap gap-2 sm:gap-3">
             <Button as={Link} to="/signup">
               Get Started
               <ArrowRight size={15} />
@@ -363,19 +389,28 @@ const payment = await res.json();`;
             <Button as="a" href="#docs" variant="secondary">
               Read the Docs
             </Button>
-          </motion.div>
-          <motion.p
-            variants={reduceMotion ? undefined : item}
-            className="mt-6 sm:mt-8 text-xs sm:text-sm text-[var(--ctex-text-muted)]"
-          >
+          </div>
+          <p className="mt-6 sm:mt-8 text-xs sm:text-sm text-[var(--ctex-text-muted)]">
             No SDK to install. Your API key is the integration.
-          </motion.p>
-        </div>
-
-        <motion.div variants={reduceMotion ? undefined : item}>
-          <CodeWindow label="payments.js" lines={codeLines} />
+          </p>
         </motion.div>
-      </motion.div>
+
+        <motion.div
+          initial={reduceMotion ? undefined : "hidden"}
+          animate={reduceMotion ? undefined : "show"}
+          variants={reduceMotion ? undefined : codeBlock}
+          className="relative"
+        >
+          <CodeWindow label="payments.js" lines={codeLines} accent />
+
+          {/* Entrance-only status badges — no continuous loop/float animation,
+              so there's nothing running on the compositor after ~0.6s. */}
+          <div className="mt-3 flex flex-wrap gap-2 sm:absolute sm:-bottom-4 sm:right-4 sm:mt-0">
+            <HeroStatusBadge icon={CheckCircle2} label="Payment verified" tone="success" delay={0.4} />
+            <HeroStatusBadge icon={Webhook} label="Webhook delivered" tone="info" delay={0.5} />
+          </div>
+        </motion.div>
+      </div>
     </section>
   );
 }
@@ -1022,7 +1057,7 @@ function FAQ() {
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
+                    transition={{ duration: 0.18 }}
                     className="overflow-hidden"
                   >
                     <p className="pb-4 sm:pb-5 text-xs sm:text-sm leading-relaxed text-[var(--ctex-text-muted)]">{f.a}</p>
