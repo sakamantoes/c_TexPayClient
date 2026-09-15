@@ -5,13 +5,8 @@ import { useMerchantStore } from "./merchant.store";
 
 const syncMerchantState = async (user) => {
   const roles = Array.isArray(user?.roles) ? user.roles : [];
-  const roleValues = [user?.role, user?.userType, ...roles]
-    .filter(Boolean)
-    .map((value) => String(value).toLowerCase());
-
-  const isMerchantFlow = roleValues.some((value) =>
-    value.includes("merchant") || value.includes("merchant_admin") || value.includes("merchantadmin")
-  );
+  const roleValues = [user?.role, ...roles].filter(Boolean);
+  const isMerchantFlow = roleValues.includes("MERCHANT");
 
   if (!isMerchantFlow) {
     useMerchantStore.getState().clearMerchant();

@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import {
   BrowserRouter as Router,
@@ -17,16 +16,24 @@ import MerchantDashboard from "./page/MerchantDashboard/MerchantDashboard.jsx";
 import AdminDashboard from "./page/AdminDashboard/AdminDashboard.jsx";
 import SuperAdminDashboard from "./page/SuperAdminDashboard/SuperAdminDashboard.jsx";
 import { useAuthStore } from "./store/auth.store";
-import { getDashboardPath } from "./utils/role.js";
+import { getDashboardPath, ROLES } from "./utils/role.js";
 import { FullScreenLoader } from "./components/Spin.jsx";
 import VerifyEmailPage from "./page/VerifyEmailPage.jsx";
 import VerifyEmailSentPage from "./page/VerifyEmailSentPage.jsx";
+import UserDashboard from "./page/UserDashboard/UserDashboard.jsx";
 
 const DashboardRouter = () => {
-  const { user } = useAuthStore();
-  const targetPath = getDashboardPath(user);
+  const { user, isAuthenticated } = useAuthStore();
 
-  return <Navigate to={targetPath} replace />;
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (user?.role === ROLES.USER) {
+    return <UserDashboard />;
+  }
+
+  return <Navigate to={getDashboardPath(user)} replace />;
 };
 
 const AppRoutes = () => {
@@ -37,11 +44,7 @@ const AppRoutes = () => {
   }, [getMe]);
 
   if (!initialized) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <FullScreenLoader />
-      </div>
-    );
+    return <FullScreenLoader />;
   }
 
   return (
@@ -49,14 +52,21 @@ const AppRoutes = () => {
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<RegisterPage />} />
-      <Route path="/dashboard" element={<DashboardRouter />} />
+      <Route
+        path="/user/onboarding/dashboard"
+        element={
+          <ProtectedRoute allowedRoles={[ROLES.USER, ROLES.MERCHANT, ROLES.ADMIN, ROLES.SUPER_ADMIN]}>
+            <DashboardRouter />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
-<Route path="/verify-email-sent" element={<VerifyEmailSentPage />} />
+      <Route path="/verify-email-sent" element={<VerifyEmailSentPage />} />
 
       <Route
         path="/merchant/dashboard"
         element={
-          <ProtectedRoute allowedRoles={["merchant", "merchant_admin", "merchantadmin"]}>
+          <ProtectedRoute allowedRoles={["MERCHANT"]}>
             <MerchantDashboard />
           </ProtectedRoute>
         }
@@ -65,7 +75,7 @@ const AppRoutes = () => {
       <Route
         path="/admin/dashboard"
         element={
-          <ProtectedRoute allowedRoles={["admin"]}>
+          <ProtectedRoute allowedRoles={["ADMIN"]}>
             <AdminDashboard />
           </ProtectedRoute>
         }
@@ -74,7 +84,7 @@ const AppRoutes = () => {
       <Route
         path="/super-admin/dashboard"
         element={
-          <ProtectedRoute allowedRoles={["super_admin", "superadmin"]}>
+          <ProtectedRoute allowedRoles={["SUPER_ADMIN"]}>
             <SuperAdminDashboard />
           </ProtectedRoute>
         }

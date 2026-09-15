@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../store/auth.store";
+import { getDashboardPath } from "../utils/role";
 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const { isAuthenticated, user, initialized } = useAuthStore();
@@ -14,18 +15,14 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   }
 
   if (allowedRoles.length > 0) {
-    const roles = user?.roles || [];
-    const userRole = user?.role || "";
-    const hasAccess = allowedRoles.some((role) => {
-      const normalizedRole = String(role).toLowerCase();
-      return (
-        String(userRole).toLowerCase() === normalizedRole ||
-        roles.some((item) => String(item).toLowerCase() === normalizedRole)
-      );
-    });
+    const userRole = user?.role;
+    const roleArray = Array.isArray(user?.roles) ? user.roles : [];
+    const hasAccess =
+      allowedRoles.includes(userRole) || roleArray.some((role) => allowedRoles.includes(role));
 
     if (!hasAccess) {
-      return <Navigate to="/login" replace />;
+      const fallbackPath = user?.role ? getDashboardPath(user) : "/login";
+      return <Navigate to={fallbackPath} replace state={{ from: location.pathname }} />;
     }
   }
 

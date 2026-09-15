@@ -1,66 +1,77 @@
-export const normalizeRoleKey = (value) => {
-  if (!value) return "";
+/*
+|--------------------------------------------------------------------------
+| Role Utilities
+|--------------------------------------------------------------------------
+| The backend is the single source of truth for role. The User model
+| defines role as an ENUM: USER | MERCHANT | ADMIN | SUPER_ADMIN.
+| sanitizeUser() only strips `password`, so `role` always comes back
+| exactly as stored — no other field ever carries the role.
+|
+| This file does NOT infer, normalize, or search across multiple
+| possible fields. It reads `user.role` and matches it exactly.
+|--------------------------------------------------------------------------
+*/
 
-  return String(value)
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_|_$/g, "");
+export const ROLES = Object.freeze({
+  USER: "USER",
+  MERCHANT: "MERCHANT",
+  ADMIN: "ADMIN",
+  SUPER_ADMIN: "SUPER_ADMIN",
+});
+
+const DASHBOARD_PATHS = Object.freeze({
+  [ROLES.SUPER_ADMIN]: "/super-admin/dashboard",
+  [ROLES.ADMIN]: "/admin/dashboard",
+  [ROLES.MERCHANT]: "/merchant/dashboard",
+  [ROLES.USER]: "/user/onboarding/dashboard",
+});
+
+/**
+ * Returns the user's exact role as sent by the backend.
+ * No normalization, no fallbacks to other fields.
+ */
+export const getUserRole = (user) => {
+  return user?.role ?? null;
 };
 
-export const getUserRoles = (user) => {
-  if (!user) return [];
-
-  const values = [];
-
-  const collect = (entry) => {
-    if (!entry) return;
-
-    if (Array.isArray(entry)) {
-      entry.forEach(collect);
-      return;
-    }
-
-    if (typeof entry === "object") {
-      if (entry.name) values.push(entry.name);
-      if (entry.role) values.push(entry.role);
-      if (entry.value) values.push(entry.value);
-      return;
-    }
-
-    values.push(entry);
-  };
-
-  collect(user.role);
-  collect(user.roles);
-  collect(user.userType);
-  collect(user.type);
-  collect(user?.membership?.role);
-  collect(user?.membership?.name);
-  collect(user?.merchant?.role);
-  collect(user?.merchant?.type);
-
-  return [...new Set(values.map((value) => normalizeRoleKey(value)).filter(Boolean))];
+/**
+ * Strict equality check against the backend role.
+ */
+export const hasRole = (user, role) => {
+  return getUserRole(user) === role;
 };
 
+/**
+ * True if the user's role is one of the given list (exact match only).
+ */
+export const hasAnyRole = (user, roles = []) => {
+  const role = getUserRole(user);
+  if (!role) return false;
+  return roles.includes(role);
+};
+
+export const isSuperAdmin = (user) => hasRole(user, ROLES.SUPER_ADMIN);
+export const isAdmin = (user) => hasRole(user, ROLES.ADMIN);
+export const isMerchant = (user) => hasRole(user, ROLES.MERCHANT);
+export const isUser = (user) => hasRole(user, ROLES.USER);
+
+/**
+ * Resolves the dashboard path for the user's exact role.
+ * Throws if the backend ever sends a role this file doesn't know about —
+ * fail loudly rather than silently guessing a fallback route.
+ */
 export const getDashboardPath = (user) => {
-  const roles = getUserRoles(user);
+  const role = getUserRole(user);
 
-  if (roles.includes("super_admin") || roles.includes("superadmin")) {
-    return "/super-admin/dashboard";
+  if (!role) {
+    throw new Error("getDashboardPath: user has no role");
   }
 
-  if (roles.includes("admin")) {
-    return "/admin/dashboard";
+  const path = DASHBOARD_PATHS[role];
+
+  if (!path) {
+    throw new Error(`getDashboardPath: unknown role "${role}"`);
   }
 
-  if (
-    roles.includes("merchant") ||
-    roles.includes("merchant_admin") ||
-    roles.includes("merchantadmin")
-  ) {
-    return "/merchant/dashboard";
-  }
-
-  return "/dashboard";
+  return path;
 };
