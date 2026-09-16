@@ -304,7 +304,7 @@ const MerchantDashboard = () => {
     if (hasPermission(permissions, "team.manage")) {
       actions.push({
         label: "Add team member",
-        onClick: () => navigate("/merchant/dashboard/team/invite"),
+        onClick: () => navigate("/merchant/dashboard/team"),
       });
     }
 
@@ -475,7 +475,7 @@ const MerchantDashboard = () => {
             {hasPermission(permissions, "team.read") && (
               <button
                 type="button"
-                onClick={() => navigate("/dashboard/team")}
+                onClick={() => navigate("/merchant/dashboard/team")}
                 className="text-sm text-ctex-blue hover:underline"
               >
                 Manage
@@ -577,7 +577,7 @@ function RecentList({ items, loading, emptyLabel }) {
           </div>
           <span
             className={[
-              "ml-3 flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+              "ml-3 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
               toneClasses(item.trailingTone),
             ].join(" ")}
           >

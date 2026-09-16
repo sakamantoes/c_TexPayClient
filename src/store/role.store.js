@@ -1,12 +1,26 @@
 import { create } from "zustand";
 import roleService from "../service/role.service";
 
-export const useRoleStore = create((set) => ({
+export const useRoleStore = create((set, get) => ({
+  /*
+  |--------------------------------------------------------------------------
+  | STATE
+  |--------------------------------------------------------------------------
+  */
   roles: [],
   currentRole: null,
   isLoading: false,
   error: null,
 
+  /*
+  |--------------------------------------------------------------------------
+  | FETCH
+  |--------------------------------------------------------------------------
+  */
+
+  /**
+   * Fetch all roles for the current merchant.
+   */
   getRoles: async () => {
     set({ isLoading: true, error: null });
     try {
@@ -14,12 +28,16 @@ export const useRoleStore = create((set) => ({
       set({ roles: res.data.roles, isLoading: false });
       return { success: true, data: res };
     } catch (err) {
-      const message = err.response?.data?.message || "Failed to load roles";
+      const message =
+        err.response?.data?.message || "Failed to load roles";
       set({ isLoading: false, error: message });
       return { success: false, message };
     }
   },
 
+  /**
+   * Fetch a single role by ID.
+   */
   getRole: async (roleId) => {
     set({ isLoading: true, error: null });
     try {
@@ -27,12 +45,22 @@ export const useRoleStore = create((set) => ({
       set({ currentRole: res.data.role, isLoading: false });
       return { success: true, data: res };
     } catch (err) {
-      const message = err.response?.data?.message || "Failed to load role";
+      const message =
+        err.response?.data?.message || "Failed to load role";
       set({ isLoading: false, error: message });
       return { success: false, message };
     }
   },
 
+  /*
+  |--------------------------------------------------------------------------
+  | CRUD
+  |--------------------------------------------------------------------------
+  */
+
+  /**
+   * Create a new role.
+   */
   createRole: async (payload) => {
     set({ isLoading: true, error: null });
     try {
@@ -43,12 +71,16 @@ export const useRoleStore = create((set) => ({
       }));
       return { success: true, data: res };
     } catch (err) {
-      const message = err.response?.data?.message || "Failed to create role";
+      const message =
+        err.response?.data?.message || "Failed to create role";
       set({ isLoading: false, error: message });
       return { success: false, message };
     }
   },
 
+  /**
+   * Update a role.
+   */
   updateRole: async (roleId, payload) => {
     set({ isLoading: true, error: null });
     try {
@@ -61,12 +93,16 @@ export const useRoleStore = create((set) => ({
       }));
       return { success: true, data: res };
     } catch (err) {
-      const message = err.response?.data?.message || "Failed to update role";
+      const message =
+        err.response?.data?.message || "Failed to update role";
       set({ isLoading: false, error: message });
       return { success: false, message };
     }
   },
 
+  /**
+   * Delete a role.
+   */
   deleteRole: async (roleId) => {
     set({ isLoading: true, error: null });
     try {
@@ -77,12 +113,23 @@ export const useRoleStore = create((set) => ({
       }));
       return { success: true };
     } catch (err) {
-      const message = err.response?.data?.message || "Failed to delete role";
+      const message =
+        err.response?.data?.message || "Failed to delete role";
       set({ isLoading: false, error: message });
       return { success: false, message };
     }
   },
 
+  /*
+  |--------------------------------------------------------------------------
+  | PERMISSIONS
+  |--------------------------------------------------------------------------
+  */
+
+  /**
+   * Assign a permission to a role.
+   * Uses the body-variant endpoint (POST /roles/:id/permissions).
+   */
   assignPermission: async (roleId, permissionId) => {
     try {
       const res = await roleService.assignPermission(roleId, permissionId);
@@ -99,6 +146,32 @@ export const useRoleStore = create((set) => ({
     }
   },
 
+  /**
+   * Assign a permission to a role.
+   * Uses the URL-param-variant endpoint (POST /roles/:id/permissions/:permissionId).
+   */
+  assignPermissionByParam: async (roleId, permissionId) => {
+    try {
+      const res = await roleService.assignPermissionByParam(
+        roleId,
+        permissionId
+      );
+      set((s) => ({
+        roles: s.roles.map((r) =>
+          r.id === roleId ? res.data.role : r
+        ),
+      }));
+      return { success: true, data: res };
+    } catch (err) {
+      const message =
+        err.response?.data?.message || "Failed to assign permission";
+      return { success: false, message };
+    }
+  },
+
+  /**
+   * Remove a permission from a role.
+   */
   removePermission: async (roleId, permissionId) => {
     try {
       const res = await roleService.removePermission(roleId, permissionId);
@@ -115,5 +188,28 @@ export const useRoleStore = create((set) => ({
     }
   },
 
+  /*
+  |--------------------------------------------------------------------------
+  | UTILITIES
+  |--------------------------------------------------------------------------
+  */
+
+  /**
+   * Get a role by ID from local state.
+   */
+  getRoleById: (roleId) => {
+    return get().roles.find((r) => r.id === roleId) || null;
+  },
+
   clearError: () => set({ error: null }),
+
+  reset: () =>
+    set({
+      roles: [],
+      currentRole: null,
+      isLoading: false,
+      error: null,
+    }),
 }));
+
+export default useRoleStore;

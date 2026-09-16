@@ -63,14 +63,42 @@ export const roleService = {
     return data;
   },
 
+  /*
+  |--------------------------------------------------------------------------
+  | PERMISSIONS
+  |--------------------------------------------------------------------------
+  */
+
   /**
-   * Assign a permission to a role
+   * Assign a permission to a role (URL-param variant)
    * POST /roles/:id/permissions/:permissionId
    * Required permission: roles.manage
    */
-  assignPermission: async (roleId, permissionId) => {
+  assignPermissionByParam: async (roleId, permissionId) => {
+    if (!roleId || !permissionId) {
+      throw new Error("Role and permission IDs are required");
+    }
     const { data } = await api.post(
-      `/roles/${roleId}/permissions/${permissionId}`
+      `/roles/${encodeURIComponent(roleId)}/permissions/${encodeURIComponent(permissionId)}`
+    );
+    return data;
+  },
+
+  /**
+   * Assign a permission to a role (body variant — recommended)
+   * POST /roles/:id/permissions
+   * Required permission: roles.manage
+   *
+   * @param {string} roleId
+   * @param {string} permissionId
+   */
+  assignPermission: async (roleId, permissionId) => {
+    if (!roleId || !permissionId) {
+      throw new Error("Role and permission IDs are required");
+    }
+    const { data } = await api.post(
+      `/roles/${encodeURIComponent(roleId)}/permissions`,
+      { permissionId }
     );
     return data;
   },
@@ -81,8 +109,15 @@ export const roleService = {
    * Required permission: roles.manage
    */
   removePermission: async (roleId, permissionId) => {
+    if (!roleId || !permissionId) {
+      throw new Error("Role and permission IDs are required");
+    }
     const { data } = await api.delete(
-      `/roles/${roleId}/permissions/${permissionId}`
+      `/roles/${encodeURIComponent(roleId)}/permissions/${encodeURIComponent(permissionId)}`,
+      // The current controller reads this value from the URL, while the
+      // request validator expects it in the body. Supplying both keeps the
+      // client compatible with the complete API contract.
+      { data: { permissionId } }
     );
     return data;
   },

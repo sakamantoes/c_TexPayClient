@@ -26,6 +26,10 @@ import ResetPasswordPage from "./page/ResetPasswordPage";
 import ChangePasswordPage from "./page/ChangePasswordPage";
 import CustomersPage from "./page/MerchantDashboard/CustomersPage.jsx";
 import PermissionGuard from "./components/guards/PermissionGuard.jsx";
+import TeamMembersPage from "./page/MerchantDashboard/TeamMembersPage.jsx";
+import RolesPage from "./page/MerchantDashboard/RolesPage.jsx";
+import BusinessProfilePage from "./page/MerchantDashboard/BusinessProfilePage.jsx";
+import ApiKeysPage from "./page/MerchantDashboard/ApiKeysPage.jsx";
 
 const DashboardRouter = () => {
   const { user, isAuthenticated } = useAuthStore();
@@ -102,6 +106,7 @@ const AppRoutes = () => {
         }
       />
 
+{/* for merchant dashboard */}
       <Route
         path="/merchant/dashboard"
         element={
@@ -122,6 +127,53 @@ const AppRoutes = () => {
         }
       />
 
+      <Route
+        path="/merchant/dashboard/business"
+        element={
+          <ProtectedRoute allowedRoles={[ROLES.MERCHANT]}>
+            <PermissionGuard permission="business.read">
+              <BusinessProfilePage />
+            </PermissionGuard>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/merchant/dashboard/api-keys"
+        element={
+          <ProtectedRoute allowedRoles={[ROLES.MERCHANT]}>
+            <PermissionGuard permission="api_keys.read">
+              <ApiKeysPage />
+            </PermissionGuard>
+          </ProtectedRoute>
+        }
+      />
+
+      
+
+     <Route
+        path="/merchant/dashboard/team"
+        element={
+          <ProtectedRoute allowedRoles={[ROLES.MERCHANT]}>
+           <PermissionGuard permission="team.read">
+      <TeamMembersPage />
+    </PermissionGuard>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+  path="/merchant/dashboard/roles"
+  element={
+          <ProtectedRoute allowedRoles={[ROLES.MERCHANT]}>
+            <PermissionGuard permission="roles.read">
+              <RolesPage />
+            </PermissionGuard>
+          </ProtectedRoute>
+        }
+      />
+
+{/* for admin dashboard */}
       <Route
         path="/admin/dashboard"
         element={

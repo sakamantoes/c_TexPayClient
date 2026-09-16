@@ -44,10 +44,11 @@ export const useApiKeyStore = create((set) => ({
     set({ isLoading: true, error: null });
     try {
       const res = await apiKeyService.createApiKey(payload);
+      const createdApiKey = res.data.apiKey || res.data;
       // res.data contains the full API key + raw `key` (shown once)
       set((s) => ({
-        apiKeys: [res.data, ...s.apiKeys],
-        newlyCreatedKey: res.data.key,
+        apiKeys: [createdApiKey, ...s.apiKeys],
+        newlyCreatedKey: res.data.key || createdApiKey.key,
         isLoading: false,
       }));
       return { success: true, data: res };
@@ -63,11 +64,12 @@ export const useApiKeyStore = create((set) => ({
     set({ isLoading: true, error: null });
     try {
       const res = await apiKeyService.rotateApiKey(apiKeyId);
+      const rotatedApiKey = res.data.newApiKey || res.data.apiKey;
       set((s) => ({
         apiKeys: s.apiKeys.map((k) =>
-          k.id === apiKeyId ? res.data.newApiKey : k
+          k.id === apiKeyId ? rotatedApiKey : k
         ),
-        newlyCreatedKey: res.data.key,
+        newlyCreatedKey: res.data.key || rotatedApiKey?.key,
         isLoading: false,
       }));
       return { success: true, data: res };
