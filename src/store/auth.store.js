@@ -44,8 +44,7 @@ export const useAuthStore = create(
           set({ isLoading: false });
           return { success: true, data: res };
         } catch (err) {
-          const message =
-            err.response?.data?.message || "Registration failed";
+          const message = err.response?.data?.message || "Registration failed";
           set({ isLoading: false, error: message });
           return { success: false, message };
         }
@@ -147,8 +146,7 @@ export const useAuthStore = create(
           set({ isLoading: false });
           return { success: true, message: res.message };
         } catch (err) {
-          const message =
-            err.response?.data?.message || "Request failed";
+          const message = err.response?.data?.message || "Request failed";
           set({ isLoading: false, error: message });
           return { success: false, message };
         }
@@ -166,25 +164,25 @@ export const useAuthStore = create(
           set({ isLoading: false });
           return { success: true, message: res.message };
         } catch (err) {
-          const message =
-            err.response?.data?.message || "Reset failed";
+          const message = err.response?.data?.message || "Reset failed";
           set({ isLoading: false, error: message });
           return { success: false, message };
         }
       },
 
       resendVerification: async (email) => {
-  set({ isLoading: true, error: null });
-  try {
-    const res = await authService.resendVerification(email);
-    set({ isLoading: false });
-    return { success: true, message: res.message };
-  } catch (err) {
-    const message = err.response?.data?.message || "Failed to resend email";
-    set({ isLoading: false, error: message });
-    return { success: false, message };
-  }
-},
+        set({ isLoading: true, error: null });
+        try {
+          const res = await authService.resendVerification(email);
+          set({ isLoading: false });
+          return { success: true, message: res.message };
+        } catch (err) {
+          const message =
+            err.response?.data?.message || "Failed to resend email";
+          set({ isLoading: false, error: message });
+          return { success: false, message };
+        }
+      },
 
       /*
       |--------------------------------------------------------------------------
@@ -214,6 +212,6 @@ export const useAuthStore = create(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
-    }
-  )
+    },
+  ),
 );

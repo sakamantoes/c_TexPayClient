@@ -17,6 +17,8 @@ export default function LoginPage() {
   const [localError, setLocalError] = useState("");
 
   const justVerified = location.state?.verified;
+  const justReset = location.state?.reset;
+  const justChanged = location.state?.passwordChanged;
 
   const handleChange = (e) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -54,7 +56,7 @@ export default function LoginPage() {
       subtitle="Sign in to continue to your C-TEX PAY dashboard."
       footer={
         <>
-          Don&apos;t have an account?{" "}
+          New to C-TEX PAY?{" "}
           <Link
             to="/signup"
             className="font-medium text-ctex-blue hover:text-ctex-blue-light hover:underline"
@@ -72,9 +74,36 @@ export default function LoginPage() {
             exit={{ opacity: 0, height: 0, marginBottom: 0 }}
             className="overflow-hidden"
           >
-            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2.5 text-xs text-emerald-600 dark:text-emerald-400">
+            <Banner type="success">
               ✅ Email verified successfully. You can now sign in.
-            </div>
+            </Banner>
+          </motion.div>
+        )}
+
+        {justReset && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+            animate={{ opacity: 1, height: "auto", marginBottom: 16 }}
+            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+            className="overflow-hidden"
+          >
+            <Banner type="success">
+              ✅ Password reset successfully. Please sign in with your new
+              password.
+            </Banner>
+          </motion.div>
+        )}
+
+        {justChanged && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+            animate={{ opacity: 1, height: "auto", marginBottom: 16 }}
+            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+            className="overflow-hidden"
+          >
+            <Banner type="success">
+              ✅ Password changed. Please sign in again.
+            </Banner>
           </motion.div>
         )}
       </AnimatePresence>
@@ -131,6 +160,33 @@ export default function LoginPage() {
         </PrimaryButton>
       </form>
     </AuthLayout>
+  );
+}
+
+/* ----------------------------- Banner Component ----------------------------- */
+
+function Banner({ type = "info", children }) {
+  const styles = {
+    success:
+      "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    error:
+      "border-red-500/30 bg-red-500/10 text-red-500",
+    info:
+      "border-ctex-blue/30 bg-ctex-blue/10 text-ctex-blue",
+    warning:
+      "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  };
+
+  return (
+    <div
+      className={[
+        "rounded-xl border px-3.5 py-2.5 text-xs",
+        styles[type] || styles.info,
+      ].join(" ")}
+      role="status"
+    >
+      {children}
+    </div>
   );
 }
 

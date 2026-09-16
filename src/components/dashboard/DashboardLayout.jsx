@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Activity,
@@ -14,6 +15,7 @@ import {
   Landmark,
   LayoutGrid,
   Link2,
+  Loader2,
   LogOut,
   Menu,
   Search,
@@ -27,6 +29,8 @@ import {
   Webhook,
   X,
 } from "lucide-react";
+import { useAuthStore } from "../../store/auth.store";
+import { useMerchantStore } from "../../store/merchant.store";
 
 const ICONS = {
   dashboard: LayoutGrid,
@@ -53,45 +57,209 @@ const ICONS = {
 
 const resolveIcon = (iconName) => ICONS[iconName] || LayoutGrid;
 
+/*
+|--------------------------------------------------------------------------
+| Build a flat index: { [key]: { parent, child, section } }
+|--------------------------------------------------------------------------
+*/
+const buildIndex = (navSections = []) => {
+  const index = {};
+
+  navSections.forEach((section) => {
+    (section.items || []).forEach((item) => {
+      index[item.key] = {
+        key: item.key,
+        label: item.label,
+        path: item.path,
+        sectionTitle: section.title,
+        parent: null,
+        child: null,
+      };
+
+      (item.children || []).forEach((child) => {
+        index[child.key] = {
+          key: child.key,
+          label: child.label,
+          path: child.path,
+          sectionTitle: section.title,
+          parent: item,
+          child: null,
+        };
+      });
+    });
+  });
+
+  return index;
+};
+
+/*
+|--------------------------------------------------------------------------
+| Find nav key from a given URL path (deepest match wins)
+|--------------------------------------------------------------------------
+*/
+const findKeyFromPath = (index, pathname) => {
+  if (!pathname) return null;
+
+  let bestMatchKey = null;
+  let bestMatchLength = -1;
+
+  Object.values(index).forEach((entry) => {
+    if (!entry.path) return;
+
+    const isMatch =
+      pathname === entry.path || pathname.startsWith(entry.path + "/");
+
+    if (isMatch && entry.path.length > bestMatchLength) {
+      bestMatchKey = entry.key;
+      bestMatchLength = entry.path.length;
+    }
+  });
+
+  return bestMatchKey;
+};
+
 const DashboardLayout = ({
   title,
   subtitle,
   navSections,
   profileName = "Operator",
+  profileRole,
   children,
 }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // ---- Auth + merchant stores (for logout) ----
+  const { logout, isLoading: authLoading } = useAuthStore();
+  const { clearMerchant } = useMerchantStore();
+
+  const [signingOut, setSigningOut] = useState(false);
+
+  const index = useMemo(() => buildIndex(navSections), [navSections]);
+
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [selectedKey, setSelectedKey] = useState(() => {
-    const firstItem = navSections?.[0]?.items?.[0]?.key || "dashboard";
-    return firstItem;
-  });
+
+  const urlKey = useMemo(
+    () => findKeyFromPath(index, location.pathname),
+    [index, location.pathname]
+  );
+
+  const [manualSelectedKey, setManualSelectedKey] = useState(
+    () => urlKey || navSections?.[0]?.items?.[0]?.key || "dashboard"
+  );
+
+  const selectedKey = urlKey || manualSelectedKey;
+
   const [expanded, setExpanded] = useState(() => {
     const map = {};
     navSections?.forEach((section) => {
-      if (section.items) {
-        section.items.forEach((item) => {
-          if (item.children?.length) {
-            map[item.key] = true;
-          }
-        });
-      }
+      (section.items || []).forEach((item) => {
+        if (item.children?.length) {
+          map[item.key] = true;
+        }
+      });
     });
     return map;
   });
 
-  const activeLabel = useMemo(() => {
-    const allItems = (navSections || []).flatMap((section) => section.items || []);
-    const found = allItems.find((item) => item.key === selectedKey);
-    return found?.label || title;
-  }, [navSections, selectedKey, title]);
+  /*
+  |--------------------------------------------------------------------------
+  | Breadcrumbs
+  |--------------------------------------------------------------------------
+  */
+  const breadcrumbs = useMemo(() => {
+    const entry = index[selectedKey];
+    const crumbs = [];
+
+    crumbs.push({ label: title || "Workspace", key: "__root__" });
+
+    if (!entry) return crumbs;
+
+    if (entry.parent) {
+      crumbs.push({
+        label: entry.parent.label,
+        key: entry.parent.key,
+        path: entry.parent.path,
+      });
+      crumbs.push({
+        label: entry.label,
+        key: entry.key,
+        path: entry.path,
+      });
+    } else {
+      crumbs.push({
+        label: entry.label,
+        key: entry.key,
+        path: entry.path,
+      });
+    }
+
+    return crumbs;
+  }, [index, selectedKey, title]);
+
+  const activeLabel =
+    breadcrumbs[breadcrumbs.length - 1]?.label || title || "Workspace";
 
   const toggleExpanded = (key) => {
-    setExpanded((current) => ({
-      ...current,
-      [key]: !current[key],
-    }));
+    setExpanded((current) => ({ ...current, [key]: !current[key] }));
   };
 
+  const handleItemClick = (item) => {
+    const hasChildren = Boolean(item.children?.length);
+
+    if (hasChildren) {
+      toggleExpanded(item.key);
+    }
+
+    setManualSelectedKey(item.key);
+
+    if (item.path) {
+      navigate(item.path);
+    }
+  };
+
+  const handleChildClick = (child) => {
+    setManualSelectedKey(child.key);
+    if (child.path) {
+      navigate(child.path);
+    }
+    setMobileOpen(false);
+  };
+
+  /*
+  |--------------------------------------------------------------------------
+  | SIGN OUT
+  |--------------------------------------------------------------------------
+  | 1. Call authService.logout() (revokes refresh token + clears localStorage)
+  | 2. Clear merchant-scoped state
+  | 3. Redirect to /login
+  */
+  const handleSignOut = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+
+    try {
+      await logout(); // auth store action
+    } catch (err) {
+      // logout() already swallows errors, but just in case
+      console.error("Sign out error:", err);
+    } finally {
+      // Clear merchant/membership data so the next user doesn't see it
+      clearMerchant();
+
+      // Close mobile drawer if open
+      setMobileOpen(false);
+
+      // Redirect to login (replace so back button doesn't loop)
+      navigate("/login", { replace: true });
+
+      setSigningOut(false);
+    }
+  };
+
+  const isSigningOut = signingOut || authLoading;
+
+  /* --------------------------- Sidebar (desktop) --------------------------- */
   const sidebar = (
     <aside className="hidden w-72 shrink-0 border-r border-ctex-border bg-ctex-surface/80 p-4 backdrop-blur-xl lg:flex lg:flex-col">
       <div className="mb-6 flex items-center justify-between rounded-2xl border border-ctex-border bg-ctex-elevated/50 px-3 py-3">
@@ -100,7 +268,9 @@ const DashboardLayout = ({
             C
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-[0.18em] text-ctex-text-muted">C-TEX</p>
+            <p className="text-[10px] uppercase tracking-[0.18em] text-ctex-text-muted">
+              C-TEX
+            </p>
             <p className="text-base font-semibold text-ctex-text">PAY</p>
           </div>
         </div>
@@ -119,20 +289,19 @@ const DashboardLayout = ({
             <div className="space-y-1">
               {(section.items || []).map((item) => {
                 const Icon = resolveIcon(item.icon);
-                const isSelected = selectedKey === item.key;
                 const hasChildren = Boolean(item.children?.length);
                 const isExpanded = expanded[item.key];
+
+                const childSelected = (item.children || []).some(
+                  (c) => c.key === selectedKey
+                );
+                const isSelected = selectedKey === item.key || childSelected;
 
                 return (
                   <div key={item.key} className="space-y-1">
                     <button
                       type="button"
-                      onClick={() => {
-                        if (hasChildren) {
-                          toggleExpanded(item.key);
-                        }
-                        setSelectedKey(item.key);
-                      }}
+                      onClick={() => handleItemClick(item)}
                       className={[
                         "flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm transition-all duration-150",
                         isSelected
@@ -145,9 +314,12 @@ const DashboardLayout = ({
                         {item.label}
                       </span>
 
-                      {hasChildren && (
-                        isExpanded ? <ChevronDown size={15} /> : <ChevronRight size={15} />
-                      )}
+                      {hasChildren &&
+                        (isExpanded ? (
+                          <ChevronDown size={15} />
+                        ) : (
+                          <ChevronRight size={15} />
+                        ))}
                     </button>
 
                     {hasChildren && isExpanded && (
@@ -156,7 +328,7 @@ const DashboardLayout = ({
                           <button
                             type="button"
                             key={child.key}
-                            onClick={() => setSelectedKey(child.key)}
+                            onClick={() => handleChildClick(child)}
                             className={[
                               "flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-xs transition-colors",
                               selectedKey === child.key
@@ -165,7 +337,9 @@ const DashboardLayout = ({
                             ].join(" ")}
                           >
                             <span>{child.label}</span>
-                            {selectedKey === child.key && <ChevronRight size={12} />}
+                            {selectedKey === child.key && (
+                              <ChevronRight size={12} />
+                            )}
                           </button>
                         ))}
                       </div>
@@ -184,21 +358,37 @@ const DashboardLayout = ({
             <UserCircle2 size={18} />
           </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-ctex-text">{profileName}</p>
-            <p className="text-[11px] text-ctex-text-muted">{title} account</p>
+            <p className="truncate text-sm font-medium text-ctex-text">
+              {profileName}
+            </p>
+            <p className="truncate text-[11px] text-ctex-text-muted">
+              {profileRole || `${title} account`}
+            </p>
           </div>
         </div>
         <button
           type="button"
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-ctex-border bg-ctex-surface px-3 py-2 text-sm font-medium text-ctex-text-muted transition hover:border-ctex-blue hover:text-ctex-blue"
+          onClick={handleSignOut}
+          disabled={isSigningOut}
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-ctex-border bg-ctex-surface px-3 py-2 text-sm font-medium text-ctex-text-muted transition hover:border-red-500/50 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <LogOut size={14} />
-          Sign out
+          {isSigningOut ? (
+            <>
+              <Loader2 size={14} className="animate-spin" />
+              Signing out…
+            </>
+          ) : (
+            <>
+              <LogOut size={14} />
+              Sign out
+            </>
+          )}
         </button>
       </div>
     </aside>
   );
 
+  /* ---------------------------- Render ---------------------------- */
   return (
     <div className="min-h-screen bg-ctex-bg text-ctex-text">
       <div className="flex min-h-screen">
@@ -217,9 +407,41 @@ const DashboardLayout = ({
                   <Menu size={18} />
                 </button>
 
-                <div>
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-ctex-text-muted">Workspace</p>
-                  <h1 className="text-lg font-semibold text-ctex-text sm:text-xl">{activeLabel}</h1>
+                <div className="min-w-0">
+                  <nav
+                    aria-label="Breadcrumb"
+                    className="flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-ctex-text-muted"
+                  >
+                    {breadcrumbs.map((crumb, idx) => {
+                      const isLast = idx === breadcrumbs.length - 1;
+                      return (
+                        <span
+                          key={crumb.key}
+                          className="flex items-center gap-1"
+                        >
+                          <span
+                            className={
+                              isLast
+                                ? "text-ctex-text-muted"
+                                : "text-ctex-text-muted/70"
+                            }
+                          >
+                            {crumb.label}
+                          </span>
+                          {!isLast && (
+                            <ChevronRight
+                              size={10}
+                              className="text-ctex-text-muted/50"
+                            />
+                          )}
+                        </span>
+                      );
+                    })}
+                  </nav>
+
+                  <h1 className="truncate text-lg font-semibold text-ctex-text sm:text-xl">
+                    {activeLabel}
+                  </h1>
                 </div>
               </div>
 
@@ -248,8 +470,12 @@ const DashboardLayout = ({
             <div className="mb-6 rounded-2xl border border-ctex-border bg-ctex-surface p-5 shadow-lg shadow-black/10">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-ctex-blue">{title}</p>
-                  <h2 className="mt-2 text-2xl font-semibold text-ctex-text sm:text-3xl">{subtitle}</h2>
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-ctex-blue">
+                    {title}
+                  </p>
+                  <h2 className="mt-2 text-2xl font-semibold text-ctex-text sm:text-3xl">
+                    {subtitle}
+                  </h2>
                 </div>
                 <div className="flex items-center gap-2 rounded-full border border-ctex-border bg-ctex-elevated px-3 py-2 text-xs text-ctex-text-muted">
                   <Sparkles size={14} className="text-ctex-blue" />
@@ -263,6 +489,7 @@ const DashboardLayout = ({
         </div>
       </div>
 
+      {/* Mobile drawer */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
@@ -278,13 +505,17 @@ const DashboardLayout = ({
               exit={{ x: -32, opacity: 0 }}
               transition={{ duration: 0.2 }}
               onClick={(event) => event.stopPropagation()}
-              className="h-full w-[82vw] max-w-sm border-r border-ctex-border bg-ctex-surface p-4"
+              className="flex h-full w-[82vw] max-w-sm flex-col border-r border-ctex-border bg-ctex-surface p-4"
             >
               <div className="mb-5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-ctex-blue text-sm font-bold text-white">C</div>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-ctex-blue text-sm font-bold text-white">
+                    C
+                  </div>
                   <div>
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-ctex-text-muted">C-TEX</p>
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-ctex-text-muted">
+                      C-TEX
+                    </p>
                     <p className="text-base font-semibold text-ctex-text">PAY</p>
                   </div>
                 </div>
@@ -299,7 +530,7 @@ const DashboardLayout = ({
                 </button>
               </div>
 
-              <nav className="space-y-4 overflow-y-auto pb-4">
+              <nav className="flex-1 space-y-4 overflow-y-auto pb-4">
                 {(navSections || []).map((section) => (
                   <div key={section.title} className="space-y-2">
                     <p className="px-2 text-[10px] font-medium uppercase tracking-[0.2em] text-ctex-text-muted">
@@ -309,18 +540,27 @@ const DashboardLayout = ({
                     <div className="space-y-1">
                       {(section.items || []).map((item) => {
                         const Icon = resolveIcon(item.icon);
-                        const isSelected = selectedKey === item.key;
                         const hasChildren = Boolean(item.children?.length);
                         const isExpanded = expanded[item.key];
+                        const childSelected = (item.children || []).some(
+                          (c) => c.key === selectedKey
+                        );
+                        const isSelected =
+                          selectedKey === item.key || childSelected;
 
                         return (
                           <div key={item.key} className="space-y-1">
                             <button
                               type="button"
                               onClick={() => {
-                                if (hasChildren) toggleExpanded(item.key);
-                                setSelectedKey(item.key);
-                                setMobileOpen(false);
+                                if (hasChildren) {
+                                  toggleExpanded(item.key);
+                                }
+                                setManualSelectedKey(item.key);
+                                if (item.path) {
+                                  navigate(item.path);
+                                  setMobileOpen(false);
+                                }
                               }}
                               className={[
                                 "flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm",
@@ -333,7 +573,12 @@ const DashboardLayout = ({
                                 <Icon size={16} />
                                 {item.label}
                               </span>
-                              {hasChildren && (isExpanded ? <ChevronDown size={15} /> : <ChevronRight size={15} />)}
+                              {hasChildren &&
+                                (isExpanded ? (
+                                  <ChevronDown size={15} />
+                                ) : (
+                                  <ChevronRight size={15} />
+                                ))}
                             </button>
 
                             {hasChildren && isExpanded && (
@@ -342,10 +587,7 @@ const DashboardLayout = ({
                                   <button
                                     key={child.key}
                                     type="button"
-                                    onClick={() => {
-                                      setSelectedKey(child.key);
-                                      setMobileOpen(false);
-                                    }}
+                                    onClick={() => handleChildClick(child)}
                                     className={[
                                       "flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-xs",
                                       selectedKey === child.key
@@ -365,6 +607,41 @@ const DashboardLayout = ({
                   </div>
                 ))}
               </nav>
+
+              {/* Mobile profile + sign out */}
+              <div className="mt-4 rounded-2xl border border-ctex-border bg-ctex-elevated/60 p-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-ctex-blue/10 text-ctex-blue">
+                    <UserCircle2 size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-ctex-text">
+                      {profileName}
+                    </p>
+                    <p className="truncate text-[11px] text-ctex-text-muted">
+                      {profileRole || `${title} account`}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  disabled={isSigningOut}
+                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-ctex-border bg-ctex-surface px-3 py-2 text-sm font-medium text-ctex-text-muted transition hover:border-red-500/50 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isSigningOut ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      Signing out…
+                    </>
+                  ) : (
+                    <>
+                      <LogOut size={14} />
+                      Sign out
+                    </>
+                  )}
+                </button>
+              </div>
             </motion.aside>
           </motion.div>
         )}

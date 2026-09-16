@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -21,6 +21,11 @@ import { FullScreenLoader } from "./components/Spin.jsx";
 import VerifyEmailPage from "./page/VerifyEmailPage.jsx";
 import VerifyEmailSentPage from "./page/VerifyEmailSentPage.jsx";
 import UserDashboard from "./page/UserDashboard/UserDashboard.jsx";
+import ForgotPasswordPage from "./page/ForgotPasswordPage";
+import ResetPasswordPage from "./page/ResetPasswordPage";
+import ChangePasswordPage from "./page/ChangePasswordPage";
+import CustomersPage from "./page/MerchantDashboard/CustomersPage.jsx";
+import PermissionGuard from "./components/guards/PermissionGuard.jsx";
 
 const DashboardRouter = () => {
   const { user, isAuthenticated } = useAuthStore();
@@ -37,7 +42,8 @@ const DashboardRouter = () => {
 };
 
 const AppRoutes = () => {
-  const { initialized, getMe } = useAuthStore();
+  // ✅ Pull everything we need from the store
+  const { initialized, getMe, isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     getMe();
@@ -52,22 +58,66 @@ const AppRoutes = () => {
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<RegisterPage />} />
+
       <Route
-        path="/user/onboarding/dashboard"
+        path="/dashboard"
         element={
-          <ProtectedRoute allowedRoles={[ROLES.USER, ROLES.MERCHANT, ROLES.ADMIN, ROLES.SUPER_ADMIN]}>
+          <ProtectedRoute
+            allowedRoles={[ROLES.USER, ROLES.MERCHANT, ROLES.ADMIN, ROLES.SUPER_ADMIN]}
+          >
             <DashboardRouter />
           </ProtectedRoute>
         }
       />
+
+      <Route
+        path="/user/onboarding/dashboard"
+        element={
+          <ProtectedRoute
+            allowedRoles={[
+              ROLES.USER,
+              ROLES.MERCHANT,
+              ROLES.ADMIN,
+              ROLES.SUPER_ADMIN,
+            ]}
+          >
+            <DashboardRouter />
+          </ProtectedRoute>
+        }
+      />
+
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/verify-email-sent" element={<VerifyEmailSentPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+      <Route
+        path="/change-password"
+        element={
+          isAuthenticated ? (
+            <ChangePasswordPage />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
 
       <Route
         path="/merchant/dashboard"
         element={
           <ProtectedRoute allowedRoles={["MERCHANT"]}>
             <MerchantDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/merchant/dashboard/customers"
+        element={
+          <ProtectedRoute allowedRoles={[ROLES.MERCHANT]}>
+            <PermissionGuard permission="customers.read">
+              <CustomersPage />
+            </PermissionGuard>
           </ProtectedRoute>
         }
       />
