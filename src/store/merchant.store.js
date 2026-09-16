@@ -28,7 +28,13 @@ export const useMerchantStore = create((set) => ({
       const message =
         err.response?.data?.message || "Failed to create merchant";
       set({ isLoading: false, error: message });
-      return { success: false, message };
+      return {
+        success: false,
+        message,
+        status: err.response?.status,
+        requiresEmailVerification:
+          err.response?.status === 403 && message === "Your account is not active",
+      };
     }
   },
 

@@ -3,6 +3,7 @@ import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import AuthLayout from "../components/auth/AuthLayout";
 import authService from "../service/auth.service";
+import { useAuthStore } from "../store/auth.store";
 
 const REDIRECT_DELAY_SECONDS = 2; // change to 3 or 5 as you like
 
@@ -35,6 +36,7 @@ export default function VerifyEmailPage() {
     (async () => {
       try {
         const res = await authService.verifyEmail(token);
+        useAuthStore.getState().clearEmailVerificationRequirement();
         setStatus("success");
         setMessage(res.message || "Email verified successfully.");
       } catch (err) {

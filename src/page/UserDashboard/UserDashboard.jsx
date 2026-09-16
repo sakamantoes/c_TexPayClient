@@ -66,6 +66,15 @@ const UserDashboard = () => {
     const result = await createMerchant(payload);
 
     if (!result.success) {
+      if (result.requiresEmailVerification) {
+        useAuthStore.getState().requireEmailVerification(user?.email);
+        navigate(
+          `/verify-email-sent?email=${encodeURIComponent(user?.email || "")}`,
+          { replace: true }
+        );
+        return;
+      }
+
       toast.error(
         result.message || "Unable to create your business right now.",
       );

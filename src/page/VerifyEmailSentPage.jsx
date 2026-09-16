@@ -1,4 +1,4 @@
-import { Link, useLocation, useSearchParams, Navigate } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import AuthLayout from "../components/auth/AuthLayout";
@@ -10,17 +10,23 @@ export default function VerifyEmailSentPage() {
 
   // Read email from either router state (from register redirect)
   // or query string (?email=...) for direct visits / reloads.
-  const email = location.state?.email || searchParams.get("email");
+  const routeEmail = location.state?.email || searchParams.get("email") || "";
+  const hasRouteEmail = Boolean(routeEmail);
 
   const { resendVerification, isLoading, error, clearError } = useAuthStore();
+  const [email, setEmail] = useState(routeEmail);
   const [resendSuccess, setResendSuccess] = useState(false);
-
-  if (!email) return <Navigate to="/register" replace />;
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
   const handleResend = async () => {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!isEmailValid) {
+      return;
+    }
+
     clearError();
     setResendSuccess(false);
-    const res = await resendVerification(email);
+    const res = await resendVerification(normalizedEmail);
     if (res.success) {
       setResendSuccess(true);
       // auto-hide success after 4s
@@ -62,14 +68,27 @@ export default function VerifyEmailSentPage() {
           <MailOpenIcon className="h-9 w-9" />
         </motion.div>
 
-        {/* Email display */}
-        <div>
+        {/* Email display / recovery input */}
+        <div className="w-full">
           <p className="text-sm text-ctex-text-muted">
-            A verification link was sent to
+            {hasRouteEmail
+              ? "A verification link was sent to"
+              : "Enter the email address you used to create your account."}
           </p>
-          <p className="mt-1 break-all text-sm font-semibold text-ctex-text">
-            {email}
-          </p>
+          {hasRouteEmail ? (
+            <p className="mt-1 break-all text-sm font-semibold text-ctex-text">
+              {email}
+            </p>
+          ) : (
+            <input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="you@example.com"
+              autoComplete="email"
+              className="mt-3 h-11 w-full rounded-xl border border-ctex-border bg-ctex-elevated/60 px-3 text-sm text-ctex-text outline-none transition placeholder:text-ctex-text-muted/60 focus:border-ctex-blue focus:ring-2 focus:ring-ctex-blue/20"
+            />
+          )}
         </div>
 
         {/* Instructions */}
@@ -116,7 +135,7 @@ export default function VerifyEmailSentPage() {
           <button
             type="button"
             onClick={handleResend}
-            disabled={isLoading}
+            disabled={isLoading || !isEmailValid}
             className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-ctex-border bg-ctex-surface text-sm font-medium text-ctex-text transition hover:border-ctex-blue/50 hover:bg-ctex-elevated disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isLoading ? (

@@ -1,9 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
+  useLocation,
 } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -47,14 +48,35 @@ const DashboardRouter = () => {
 
 const AppRoutes = () => {
   // ✅ Pull everything we need from the store
-  const { initialized, getMe, isAuthenticated } = useAuthStore();
+  const {
+    initialized,
+    getMe,
+    isAuthenticated,
+    verificationRequired,
+    verificationEmail,
+  } = useAuthStore();
+  const location = useLocation();
+  const hasBootstrappedSession = useRef(false);
 
   useEffect(() => {
+    if (hasBootstrappedSession.current) return;
+    hasBootstrappedSession.current = true;
     getMe();
   }, [getMe]);
 
   if (!initialized) {
     return <FullScreenLoader />;
+  }
+
+  if (
+    verificationRequired &&
+    location.pathname !== "/verify-email-sent" &&
+    location.pathname !== "/verify-email"
+  ) {
+    const email = verificationEmail
+      ? `?email=${encodeURIComponent(verificationEmail)}`
+      : "";
+    return <Navigate to={`/verify-email-sent${email}`} replace />;
   }
 
   return (

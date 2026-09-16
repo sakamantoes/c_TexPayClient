@@ -31,6 +31,8 @@ export const useAuthStore = create(
       isLoading: false,
       error: null,
       initialized: false,
+      verificationRequired: false,
+      verificationEmail: null,
 
       /*
       |--------------------------------------------------------------------------
@@ -66,6 +68,8 @@ export const useAuthStore = create(
             isAuthenticated: true,
             isLoading: false,
             error: null,
+            verificationRequired: false,
+            verificationEmail: null,
           });
 
           if (nextUser) {
@@ -93,6 +97,8 @@ export const useAuthStore = create(
           isAuthenticated: false,
           isLoading: false,
           error: null,
+          verificationRequired: false,
+          verificationEmail: null,
         });
       },
 
@@ -108,6 +114,10 @@ export const useAuthStore = create(
           set({ initialized: true, isAuthenticated: false, user: null });
           return;
         }
+
+        // React Strict Mode and route remounts can invoke bootstrap more than
+        // once. Do not send duplicate session checks while one is in flight.
+        if (get().isLoading && !get().initialized) return;
 
         set({ isLoading: true });
         try {
@@ -125,11 +135,19 @@ export const useAuthStore = create(
             await syncMerchantState(nextUser);
           }
         } catch (err) {
+          const message = err.response?.data?.message;
+          const requiresVerification =
+            err.response?.status === 403 && message === "Your account is not active";
+          const email = get().user?.email || null;
+
           set({
             user: null,
             isAuthenticated: false,
             isLoading: false,
             initialized: true,
+            verificationRequired: requiresVerification,
+            verificationEmail: requiresVerification ? email : null,
+            error: requiresVerification ? null : message || null,
           });
         }
       },
@@ -205,6 +223,17 @@ export const useAuthStore = create(
       },
 
       clearError: () => set({ error: null }),
+
+      requireEmailVerification: (email) =>
+        set({
+          user: null,
+          isAuthenticated: false,
+          verificationRequired: true,
+          verificationEmail: email || null,
+        }),
+
+      clearEmailVerificationRequirement: () =>
+        set({ verificationRequired: false, verificationEmail: null }),
     }),
     {
       name: "auth-store",
