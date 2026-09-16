@@ -24,6 +24,7 @@ import {
   Clock,
   XCircle,
 } from "lucide-react";
+import { ImageLogo } from "../utils/image";
 
 /* ------------------------------------------------------------------ */
 /* Theme                                                               */
@@ -231,7 +232,7 @@ function Navbar({ theme, setTheme }) {
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
         <Link to="/" className="font-display text-base sm:text-lg font-semibold tracking-tight text-[var(--ctex-text)]">
-          C-TEX <span className="text-ctex-blue">PAY</span>
+        <img src={ImageLogo.Logo} alt="C-TEX PAY" className="h-[100px] sm:h-[100px] w-[100px]" />
         </Link>
 
         <nav className="hidden items-center gap-6 md:flex lg:gap-8">
@@ -1136,7 +1137,7 @@ function Footer() {
 
         <div className="mt-10 sm:mt-14 flex flex-col items-start justify-between gap-3 sm:gap-4 border-t border-[var(--ctex-border)] pt-6 sm:pt-8 sm:flex-row sm:items-center">
           <span className="font-display text-xs sm:text-sm font-semibold text-[var(--ctex-text)]">
-            C-TEX <span className="text-ctex-blue">PAY</span>
+           <img src={ImageLogo.Logo} alt="C-TEX PAY" className="h-5 sm:h-20" />
           </span>
           <p className="text-[10px] sm:text-xs text-[var(--ctex-text-muted)]">© 2026 C-TEX PAY. All rights reserved.</p>
         </div>
