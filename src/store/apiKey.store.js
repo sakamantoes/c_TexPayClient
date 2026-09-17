@@ -6,9 +6,9 @@ export const useApiKeyStore = create((set) => ({
   currentApiKey: null,
   usage: [],
   usagePagination: null,
-  // The raw key is ONLY available immediately after create/rotate.
-  // Never store it in localStorage.
   newlyCreatedKey: null,
+  revealedKey: null,        // 👈 raw key returned by /reveal
+  revealLoading: false,      // 👈 separate flag so the modal has its own spinner
   isLoading: false,
   error: null,
 
@@ -19,8 +19,7 @@ export const useApiKeyStore = create((set) => ({
       set({ apiKeys: res.data.apiKeys, isLoading: false });
       return { success: true, data: res };
     } catch (err) {
-      const message =
-        err.response?.data?.message || "Failed to load API keys";
+      const message = err.response?.data?.message || "Failed to load API keys";
       set({ isLoading: false, error: message });
       return { success: false, message };
     }
@@ -33,8 +32,7 @@ export const useApiKeyStore = create((set) => ({
       set({ currentApiKey: res.data.apiKey, isLoading: false });
       return { success: true, data: res };
     } catch (err) {
-      const message =
-        err.response?.data?.message || "Failed to load API key";
+      const message = err.response?.data?.message || "Failed to load API key";
       set({ isLoading: false, error: message });
       return { success: false, message };
     }
@@ -45,7 +43,6 @@ export const useApiKeyStore = create((set) => ({
     try {
       const res = await apiKeyService.createApiKey(payload);
       const createdApiKey = res.data.apiKey || res.data;
-      // res.data contains the full API key + raw `key` (shown once)
       set((s) => ({
         apiKeys: [createdApiKey, ...s.apiKeys],
         newlyCreatedKey: res.data.key || createdApiKey.key,
@@ -53,9 +50,26 @@ export const useApiKeyStore = create((set) => ({
       }));
       return { success: true, data: res };
     } catch (err) {
-      const message =
-        err.response?.data?.message || "Failed to create API key";
+      const message = err.response?.data?.message || "Failed to create API key";
       set({ isLoading: false, error: message });
+      return { success: false, message };
+    }
+  },
+
+  /**
+   * Reveal an API key (owner-only, requires account password).
+   * @param {string} apiKeyId
+   * @param {string} password
+   */
+  revealApiKey: async (apiKeyId, password) => {
+    set({ revealLoading: true, error: null });
+    try {
+      const res = await apiKeyService.revealApiKey(apiKeyId, password);
+      set({ revealedKey: res.data.apiKey, revealLoading: false });
+      return { success: true, data: res };
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to reveal API key";
+      set({ revealLoading: false, error: message });
       return { success: false, message };
     }
   },
@@ -66,16 +80,13 @@ export const useApiKeyStore = create((set) => ({
       const res = await apiKeyService.rotateApiKey(apiKeyId);
       const rotatedApiKey = res.data.newApiKey || res.data.apiKey;
       set((s) => ({
-        apiKeys: s.apiKeys.map((k) =>
-          k.id === apiKeyId ? rotatedApiKey : k
-        ),
+        apiKeys: s.apiKeys.map((k) => (k.id === apiKeyId ? rotatedApiKey : k)),
         newlyCreatedKey: res.data.key || rotatedApiKey?.key,
         isLoading: false,
       }));
       return { success: true, data: res };
     } catch (err) {
-      const message =
-        err.response?.data?.message || "Failed to rotate API key";
+      const message = err.response?.data?.message || "Failed to rotate API key";
       set({ isLoading: false, error: message });
       return { success: false, message };
     }
@@ -95,8 +106,7 @@ export const useApiKeyStore = create((set) => ({
       }));
       return { success: true, data: res };
     } catch (err) {
-      const message =
-        err.response?.data?.message || "Failed to revoke API key";
+      const message = err.response?.data?.message || "Failed to revoke API key";
       set({ isLoading: false, error: message });
       return { success: false, message };
     }
@@ -113,13 +123,15 @@ export const useApiKeyStore = create((set) => ({
       });
       return { success: true, data: res };
     } catch (err) {
-      const message =
-        err.response?.data?.message || "Failed to load API key usage";
+      const message = err.response?.data?.message || "Failed to load API key usage";
       set({ isLoading: false, error: message });
       return { success: false, message };
     }
   },
 
   clearNewlyCreatedKey: () => set({ newlyCreatedKey: null }),
+  clearRevealedKey: () => set({ revealedKey: null }),
   clearError: () => set({ error: null }),
 }));
+
+export default useApiKeyStore;

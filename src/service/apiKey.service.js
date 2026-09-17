@@ -120,6 +120,25 @@ export const apiKeyService = {
     return data;
   },
 
+    /**
+   * Reveal an API key's raw value (requires the account password).
+   * POST /api-keys/:id/reveal
+   * Requires: OWNER
+   *
+   * @param {string} apiKeyId
+   * @param {string} password - the current user's account password
+   */
+  revealApiKey: async (apiKeyId, password) => {
+    if (!apiKeyId) throw new Error("API key ID is required");
+    if (!password) throw new Error("Password is required");
+
+    const { data } = await api.post(
+      `/api-keys/${encodeURIComponent(apiKeyId)}/reveal`,
+      { password }
+    );
+    return data;
+  },
+
   /**
    * Get usage logs for an API key
    * GET /api-keys/:id/usage
@@ -136,5 +155,4 @@ export const apiKeyService = {
     return data;
   },
 };
-
 export default apiKeyService;

@@ -153,7 +153,7 @@ const AppRoutes = () => {
         path="/merchant/dashboard/business"
         element={
           <ProtectedRoute allowedRoles={[ROLES.MERCHANT]}>
-            <PermissionGuard permission="business.read">
+            <PermissionGuard permission="merchants.read">
               <BusinessProfilePage />
             </PermissionGuard>
           </ProtectedRoute>

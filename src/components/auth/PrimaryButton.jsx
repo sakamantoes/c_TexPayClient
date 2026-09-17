@@ -27,7 +27,7 @@ export default function PrimaryButton({
       {...props}
     >
       {loading && (
-        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-white" />
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/60 border-t-white" />
       )}
       <span>{children}</span>
 
