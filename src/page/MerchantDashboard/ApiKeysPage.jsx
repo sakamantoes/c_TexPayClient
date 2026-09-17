@@ -186,7 +186,7 @@ export default function ApiKeysPage() {
                 <p className="mb-2 text-xs font-medium uppercase tracking-wide text-ctex-text-muted">
                   Permissions
                 </p>
-                <div className="max-h-48 space-y-2 overflow-y-auto">
+                <div className="max-h-48 space-y-2 overflow-y-auto pr-1">
                   {catalogue.map((permission) => (
                     <label
                       key={permission.id}

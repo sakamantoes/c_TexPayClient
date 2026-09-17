@@ -121,9 +121,12 @@ export default function BusinessProfilePage() {
         {error && <div className="mb-5 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-500">{error}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {fields.map(([name, label, required]) => (
-              <label key={name} className={name === "addressLine1" ? "sm:col-span-2" : ""}>
+              <label
+                key={name}
+                className={name === "addressLine1" ? "min-w-0 sm:col-span-2" : "min-w-0"}
+              >
                 <span className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ctex-text-muted">{label}</span>
                 <input
                   name={name}

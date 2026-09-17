@@ -261,7 +261,7 @@ const DashboardLayout = ({
 
   /* --------------------------- Sidebar (desktop) --------------------------- */
   const sidebar = (
-    <aside className="hidden w-72 shrink-0 border-r border-ctex-border bg-ctex-surface/80 p-4 backdrop-blur-xl lg:flex lg:flex-col">
+    <aside className="hidden w-[260px] shrink-0 border-r border-ctex-border bg-ctex-surface/80 p-4 backdrop-blur-xl lg:flex lg:flex-col">
       <div className="mb-6 flex items-center justify-between rounded-2xl border border-ctex-border bg-ctex-elevated/50 px-3 py-3">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-ctex-blue text-sm font-bold text-white shadow-lg shadow-ctex-blue/25">
@@ -394,9 +394,9 @@ const DashboardLayout = ({
       <div className="flex min-h-screen">
         {sidebar}
 
-        <div className="flex min-h-screen flex-1 flex-col">
+        <div className="flex min-h-screen min-w-0 flex-1 flex-col overflow-hidden">
           <header className="sticky top-0 z-20 border-b border-ctex-border bg-ctex-bg/80 backdrop-blur-xl">
-            <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5 lg:px-6">
+            <div className="flex min-w-0 items-center justify-between gap-3 px-4 py-3 sm:px-5 lg:px-6">
               <div className="flex items-center gap-3">
                 <button
                   type="button"
@@ -466,7 +466,7 @@ const DashboardLayout = ({
             </div>
           </header>
 
-          <main className="flex-1 p-4 sm:p-6">
+          <main className="flex-1 overflow-x-hidden p-4 sm:p-6">
             <div className="mb-6 rounded-2xl border border-ctex-border bg-ctex-surface p-5 shadow-lg shadow-black/10">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -505,7 +505,7 @@ const DashboardLayout = ({
               exit={{ x: -32, opacity: 0 }}
               transition={{ duration: 0.2 }}
               onClick={(event) => event.stopPropagation()}
-              className="flex h-full w-[82vw] max-w-sm flex-col border-r border-ctex-border bg-ctex-surface p-4"
+              className="flex h-full w-[82vw] max-w-sm flex-col overflow-y-auto border-r border-ctex-border bg-ctex-surface p-4"
             >
               <div className="mb-5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
