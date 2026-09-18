@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
+
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import { useAuthStore } from "../../store/auth.store";
 import { useMerchantStore } from "../../store/merchant.store";
 import { useMerchantMemberStore } from "../../store/merchantMember.store";
 import { useRoleStore } from "../../store/role.store";
 import { hasPermission } from "../../utils/permissions";
+
 import AssignRoleModal from "../../components/team/AssignRoleModal";
 import RemoveMemberModal from "../../components/team/RemoveMemberModal";
 import InviteMemberModal from "../../components/team/InviteMemberModal";
@@ -16,11 +18,17 @@ import InviteMemberModal from "../../components/team/InviteMemberModal";
 | NAV
 |--------------------------------------------------------------------------
 */
+
 const buildNav = () => [
   {
     title: "Overview",
     items: [
-      { key: "dashboard", label: "Dashboard", icon: "dashboard", path: "/merchant/dashboard" },
+      {
+        key: "dashboard",
+        label: "Dashboard",
+        icon: "dashboard",
+        path: "/merchant/dashboard",
+      },
       {
         key: "business",
         label: "Business",
@@ -55,10 +63,16 @@ const buildNav = () => [
 | PAGE
 |--------------------------------------------------------------------------
 */
+
 export default function TeamMembersPage() {
   const { user } = useAuthStore();
-  const { roles: myRoles, permissions, businessProfile, getMyMembership } =
-    useMerchantStore();
+
+  const {
+    roles: myRoles,
+    permissions,
+    businessProfile,
+    getMyMembership,
+  } = useMerchantStore();
 
   const {
     members,
@@ -78,9 +92,14 @@ export default function TeamMembersPage() {
     getRoles,
   } = useRoleStore();
 
-  // Modals
-  const [assigning, setAssigning] = useState(null); // member object
-  const [removing, setRemoving] = useState(null); // member object
+  /*
+  |--------------------------------------------------------------------------
+  | Modals
+  |--------------------------------------------------------------------------
+  */
+
+  const [assigning, setAssigning] = useState(null);
+  const [removing, setRemoving] = useState(null);
   const [inviteOpen, setInviteOpen] = useState(false);
 
   /*
@@ -88,14 +107,25 @@ export default function TeamMembersPage() {
   | Bootstrap
   |--------------------------------------------------------------------------
   */
+
   useEffect(() => {
-    if (permissions.length === 0) getMyMembership();
+    if (permissions.length === 0) {
+      getMyMembership();
+    }
+
     getMembers();
     getRoles();
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const navSections = useMemo(() => buildNav(), []);
+
+  /*
+  |--------------------------------------------------------------------------
+  | Permissions
+  |--------------------------------------------------------------------------
+  */
 
   const canManage = hasPermission(permissions, "team.manage");
   const canReadRoles = hasPermission(permissions, "roles.read");
@@ -105,50 +135,139 @@ export default function TeamMembersPage() {
   | Stats
   |--------------------------------------------------------------------------
   */
+
   const stats = useMemo(() => {
-    const active = members.filter((m) => m.status === "ACTIVE").length;
-    const owners = members.filter((m) =>
-      m.roles?.some((r) => r.name === "OWNER")
+    const active = members.filter(
+      (member) => member.status === "ACTIVE"
     ).length;
+
+    const owners = members.filter((member) =>
+      member.roles?.some((role) => role.name === "OWNER")
+    ).length;
+
     const noRoles = members.filter(
-      (m) => !m.roles || m.roles.length === 0
+      (member) => !member.roles || member.roles.length === 0
     ).length;
-    return { total: members.length, active, owners, noRoles };
+
+    return {
+      total: members.length,
+      active,
+      owners,
+      noRoles,
+    };
   }, [members]);
+
+  /*
+  |--------------------------------------------------------------------------
+  | Helpers
+  |--------------------------------------------------------------------------
+  */
+
+  const isSelf = (member) => member.user?.id === user?.id;
+
+  const isOwner = (member) =>
+    member.roles?.some((role) => role.name === "OWNER");
 
   /*
   |--------------------------------------------------------------------------
   | Handlers
   |--------------------------------------------------------------------------
   */
+
   const handleAssignRole = async (roleId) => {
-    if (!assigning) return { success: false };
+    if (!assigning) {
+      return {
+        success: false,
+      };
+    }
+
     const res = await assignRole(assigning.id, roleId);
-    if (res.success) setAssigning(null);
+
+    if (res.success) {
+      setAssigning(null);
+
+      // Refresh membership list so the UI reflects the new role.
+      await getMembers();
+    }
+
     return res;
   };
 
   const handleRemoveRole = async (memberId, roleId) => {
     const res = await removeRole(memberId, roleId);
+
+    if (res.success) {
+      // Refresh membership list so role changes are reflected immediately.
+      await getMembers();
+    }
+
     return res;
   };
 
   const handleRemoveMember = async () => {
-    if (!removing) return;
+    if (!removing) {
+      return;
+    }
+
+    const removingOwner = isOwner(removing);
+
     const res = await removeMember(removing.id);
-    if (res.success) setRemoving(null);
+
+    if (res.success) {
+      /*
+      |--------------------------------------------------------------------------
+      | Close modal immediately after successful removal
+      |--------------------------------------------------------------------------
+      */
+
+      setRemoving(null);
+
+      /*
+      |--------------------------------------------------------------------------
+      | Refresh members
+      |--------------------------------------------------------------------------
+      |
+      | This makes sure the removed membership disappears from the table
+      | and the statistics are recalculated from the server response.
+      |
+      */
+
+      await getMembers();
+
+      /*
+      |--------------------------------------------------------------------------
+      | Notification
+      |--------------------------------------------------------------------------
+      */
+
+      toast.success(
+        removingOwner
+          ? "Owner removed successfully."
+          : "Member removed successfully."
+      );
+    }
   };
 
   const handleInvite = async (payload) => {
     const res = await inviteMember(payload);
+
     if (res.success) {
       setInviteOpen(false);
+
+      // Refresh members after invitation.
+      await getMembers();
+
       toast.success("Invitation sent successfully.");
     }
+
     return res;
   };
 
-  const isSelf = (member) => member.user?.id === user?.id;
+  /*
+  |--------------------------------------------------------------------------
+  | RENDER
+  |--------------------------------------------------------------------------
+  */
 
   return (
     <DashboardLayout
@@ -156,7 +275,9 @@ export default function TeamMembersPage() {
       subtitle="Team members"
       navSections={navSections}
       profileName={
-        user ? `${user.firstName} ${user.lastName}`.trim() : "Merchant Admin"
+        user
+          ? `${user.firstName} ${user.lastName}`.trim()
+          : "Merchant Admin"
       }
       profileRole={myRoles[0]?.name}
     >
@@ -166,8 +287,10 @@ export default function TeamMembersPage() {
           <h1 className="text-2xl font-semibold text-ctex-text">
             Team members
           </h1>
+
           <p className="mt-1 text-sm text-ctex-text-muted">
-            Manage who has access to your merchant account and what they can do.
+            Manage who has access to your merchant account and what they can
+            do.
           </p>
         </div>
 
@@ -185,9 +308,26 @@ export default function TeamMembersPage() {
 
       {/* Stat cards */}
       <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MiniStat label="Total members" value={stats.total} loading={isLoading} />
-        <MiniStat label="Active" value={stats.active} loading={isLoading} tone="success" />
-        <MiniStat label="Owners" value={stats.owners} loading={isLoading} tone="blue" />
+        <MiniStat
+          label="Total members"
+          value={stats.total}
+          loading={isLoading}
+        />
+
+        <MiniStat
+          label="Active"
+          value={stats.active}
+          loading={isLoading}
+          tone="success"
+        />
+
+        <MiniStat
+          label="Owners"
+          value={stats.owners}
+          loading={isLoading}
+          tone="blue"
+        />
+
         <MiniStat
           label="Without roles"
           value={stats.noRoles}
@@ -200,9 +340,18 @@ export default function TeamMembersPage() {
       <AnimatePresence>
         {error && (
           <motion.div
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
+            initial={{
+              opacity: 0,
+              y: -6,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            exit={{
+              opacity: 0,
+              y: -6,
+            }}
             className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-500"
           >
             {error}
@@ -226,10 +375,12 @@ export default function TeamMembersPage() {
             </thead>
 
             <tbody className="divide-y divide-ctex-border">
+              {/* Loading */}
               {isLoading && members.length === 0 && (
                 <SkeletonRows rows={4} cols={6} />
               )}
 
+              {/* Empty */}
               {!isLoading && members.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-4 py-16 text-center">
@@ -237,12 +388,16 @@ export default function TeamMembersPage() {
                       <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-ctex-elevated text-ctex-text-muted">
                         <UsersIcon className="h-6 w-6" />
                       </div>
+
                       <p className="text-sm font-medium text-ctex-text">
                         No team members yet
                       </p>
+
                       <p className="text-xs text-ctex-text-muted">
-                        Invite members to collaborate on your merchant account.
+                        Invite members to collaborate on your merchant
+                        account.
                       </p>
+
                       {canManage && (
                         <button
                           type="button"
@@ -257,38 +412,50 @@ export default function TeamMembersPage() {
                 </tr>
               )}
 
+              {/* Members */}
               <AnimatePresence initial={false}>
                 {members.map((member) => {
                   const self = isSelf(member);
                   const memberRoles = member.roles || [];
-                  const isOwner = memberRoles.some((r) => r.name === "OWNER");
+                  const owner = isOwner(member);
 
                   return (
                     <motion.tr
                       key={member.id}
                       layout
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
+                      initial={{
+                        opacity: 0,
+                      }}
+                      animate={{
+                        opacity: 1,
+                      }}
+                      exit={{
+                        opacity: 0,
+                      }}
                       className="transition-colors hover:bg-ctex-elevated/40"
                     >
+                      {/* Member */}
                       <Td>
                         <div className="flex items-center gap-3">
                           <Avatar
                             firstName={member.user?.firstName}
                             lastName={member.user?.lastName}
                           />
+
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
                               <p className="truncate font-medium text-ctex-text">
-                                {member.user?.firstName} {member.user?.lastName}
+                                {member.user?.firstName}{" "}
+                                {member.user?.lastName}
                               </p>
+
                               {self && (
                                 <span className="rounded-full bg-ctex-blue/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-ctex-blue">
                                   You
                                 </span>
                               )}
                             </div>
+
                             <p className="truncate text-xs text-ctex-text-muted">
                               {member.id.slice(0, 8)}…
                             </p>
@@ -296,11 +463,13 @@ export default function TeamMembersPage() {
                         </div>
                       </Td>
 
+                      {/* Contact */}
                       <Td>
                         <div className="min-w-0">
                           <p className="truncate text-sm text-ctex-text">
                             {member.user?.email || "—"}
                           </p>
+
                           {member.user?.phone && (
                             <p className="truncate text-xs text-ctex-text-muted">
                               {member.user.phone}
@@ -309,6 +478,7 @@ export default function TeamMembersPage() {
                         </div>
                       </Td>
 
+                      {/* Roles */}
                       <Td>
                         <div className="flex flex-wrap items-center gap-1.5">
                           {memberRoles.length === 0 && (
@@ -321,14 +491,19 @@ export default function TeamMembersPage() {
                             <RoleChip
                               key={role.id}
                               role={role}
-                              canRemove={canManage && !isOwner}
+                              canRemove={
+                                canManage &&
+                                !self &&
+                                !owner
+                              }
                               onRemove={() =>
                                 handleRemoveRole(member.id, role.id)
                               }
                             />
                           ))}
 
-                          {canManage && !isOwner && (
+                          {/* Add role */}
+                          {canManage && !self && !owner && (
                             <button
                               type="button"
                               onClick={() => setAssigning(member)}
@@ -340,28 +515,44 @@ export default function TeamMembersPage() {
                         </div>
                       </Td>
 
+                      {/* Status */}
                       <Td>
                         <StatusBadge status={member.status} />
                       </Td>
 
+                      {/* Joined */}
                       <Td>
                         <span className="text-xs text-ctex-text-muted">
-                          {formatDate(member.joinedAt || member.createdAt)}
+                          {formatDate(
+                            member.joinedAt || member.createdAt
+                          )}
                         </span>
                       </Td>
 
+                      {/* Actions */}
                       <Td align="right">
-                        {canManage && !self && !isOwner ? (
+                        {canManage && !self ? (
                           <button
                             type="button"
                             onClick={() => setRemoving(member)}
                             className="rounded-lg p-2 text-ctex-text-muted transition hover:bg-red-500/10 hover:text-red-500"
-                            aria-label="Remove member"
+                            aria-label={
+                              owner
+                                ? "Remove owner"
+                                : "Remove member"
+                            }
+                            title={
+                              owner
+                                ? "Remove owner"
+                                : "Remove member"
+                            }
                           >
                             <TrashIcon className="h-4 w-4" />
                           </button>
                         ) : (
-                          <span className="text-xs text-ctex-text-muted">—</span>
+                          <span className="text-xs text-ctex-text-muted">
+                            —
+                          </span>
                         )}
                       </Td>
                     </motion.tr>
@@ -376,12 +567,12 @@ export default function TeamMembersPage() {
       {/* Hint */}
       {canManage && (
         <p className="mt-4 text-xs text-ctex-text-muted">
-          Tip: owners and yourself cannot be removed. Role changes are
-          immediate.
+          Tip: you cannot remove yourself. Removing an owner removes their
+          merchant membership and associated roles.
         </p>
       )}
 
-      {/* Modals */}
+      {/* Assign Role Modal */}
       <AssignRoleModal
         open={!!assigning}
         member={assigning}
@@ -396,14 +587,20 @@ export default function TeamMembersPage() {
         isSaving={isLoading}
       />
 
+      {/* Remove Member / Owner Modal */}
       <RemoveMemberModal
         open={!!removing}
         member={removing}
-        onCancel={() => setRemoving(null)}
+        onCancel={() => {
+          if (!isLoading) {
+            setRemoving(null);
+          }
+        }}
         onConfirm={handleRemoveMember}
         isRemoving={isLoading}
       />
 
+      {/* Invite Modal */}
       <InviteMemberModal
         open={inviteOpen}
         roles={merchantRoles}
@@ -418,7 +615,7 @@ export default function TeamMembersPage() {
 
 /*
 |--------------------------------------------------------------------------
-| SUB-COMPONENTS
+| TABLE COMPONENTS
 |--------------------------------------------------------------------------
 */
 
@@ -448,7 +645,18 @@ function Td({ children, align = "left" }) {
   );
 }
 
-function MiniStat({ label, value, loading, tone = "neutral" }) {
+/*
+|--------------------------------------------------------------------------
+| STAT
+|--------------------------------------------------------------------------
+*/
+
+function MiniStat({
+  label,
+  value,
+  loading,
+  tone = "neutral",
+}) {
   const toneClass = {
     success: "text-emerald-500",
     warning: "text-amber-500",
@@ -461,10 +669,13 @@ function MiniStat({ label, value, loading, tone = "neutral" }) {
       <p className="text-xs uppercase tracking-wide text-ctex-text-muted">
         {label}
       </p>
+
       {loading ? (
         <div className="mt-2 h-7 w-12 animate-pulse rounded bg-ctex-elevated" />
       ) : (
-        <p className={`mt-1.5 text-2xl font-semibold ${toneClass}`}>
+        <p
+          className={`mt-1.5 text-2xl font-semibold ${toneClass}`}
+        >
           {value}
         </p>
       )}
@@ -472,8 +683,19 @@ function MiniStat({ label, value, loading, tone = "neutral" }) {
   );
 }
 
-function RoleChip({ role, canRemove, onRemove }) {
+/*
+|--------------------------------------------------------------------------
+| ROLE CHIP
+|--------------------------------------------------------------------------
+*/
+
+function RoleChip({
+  role,
+  canRemove,
+  onRemove,
+}) {
   const isSystem = role.isSystemRole;
+
   return (
     <span
       className={[
@@ -484,6 +706,7 @@ function RoleChip({ role, canRemove, onRemove }) {
       ].join(" ")}
     >
       {role.name}
+
       {canRemove && !isSystem && (
         <button
           type="button"
@@ -507,6 +730,12 @@ function RoleChip({ role, canRemove, onRemove }) {
   );
 }
 
+/*
+|--------------------------------------------------------------------------
+| STATUS
+|--------------------------------------------------------------------------
+*/
+
 function StatusBadge({ status }) {
   const tone = {
     ACTIVE: "bg-emerald-500/10 text-emerald-500",
@@ -528,9 +757,20 @@ function StatusBadge({ status }) {
   );
 }
 
-function Avatar({ firstName = "", lastName = "" }) {
+/*
+|--------------------------------------------------------------------------
+| AVATAR
+|--------------------------------------------------------------------------
+*/
+
+function Avatar({
+  firstName = "",
+  lastName = "",
+}) {
   const initials =
-    (firstName?.charAt(0) || "") + (lastName?.charAt(0) || "");
+    (firstName?.charAt(0) || "") +
+    (lastName?.charAt(0) || "");
+
   const safe = initials.toUpperCase() || "?";
 
   const colors = [
@@ -541,9 +781,14 @@ function Avatar({ firstName = "", lastName = "" }) {
     "bg-pink-500/15 text-pink-500",
     "bg-cyan-500/15 text-cyan-500",
   ];
+
   const idx =
-    safe.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) %
-    colors.length;
+    safe
+      .split("")
+      .reduce(
+        (acc, c) => acc + c.charCodeAt(0),
+        0
+      ) % colors.length;
 
   return (
     <span
@@ -557,13 +802,25 @@ function Avatar({ firstName = "", lastName = "" }) {
   );
 }
 
-function SkeletonRows({ rows, cols }) {
+/*
+|--------------------------------------------------------------------------
+| SKELETON
+|--------------------------------------------------------------------------
+*/
+
+function SkeletonRows({
+  rows,
+  cols,
+}) {
   return (
     <>
       {Array.from({ length: rows }).map((_, r) => (
         <tr key={r}>
           {Array.from({ length: cols }).map((_, c) => (
-            <td key={c} className="px-4 py-4">
+            <td
+              key={c}
+              className="px-4 py-4"
+            >
               <div className="h-4 w-full animate-pulse rounded bg-ctex-elevated" />
             </td>
           ))}
@@ -575,18 +832,24 @@ function SkeletonRows({ rows, cols }) {
 
 /*
 |--------------------------------------------------------------------------
-| HELPERS
+| DATE
 |--------------------------------------------------------------------------
 */
 
 function formatDate(date) {
-  if (!date) return "—";
+  if (!date) {
+    return "—";
+  }
+
   try {
-    return new Date(date).toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+    return new Date(date).toLocaleDateString(
+      undefined,
+      {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      }
+    );
   } catch {
     return "—";
   }
@@ -600,7 +863,15 @@ function formatDate(date) {
 
 function PlusIcon({ className }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M12 5v14M5 12h14" />
     </svg>
   );
@@ -608,7 +879,15 @@ function PlusIcon({ className }) {
 
 function UsersIcon({ className }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
       <circle cx="9" cy="7" r="4" />
       <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
@@ -618,8 +897,18 @@ function UsersIcon({ className }) {
 
 function TrashIcon({ className }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 6h18" />
+      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
     </svg>
   );
 }

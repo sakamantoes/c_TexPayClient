@@ -19,6 +19,11 @@ export default function LoginPage() {
   const justVerified = location.state?.verified;
   const justReset = location.state?.reset;
   const justChanged = location.state?.passwordChanged;
+  const requestedRedirect = new URLSearchParams(location.search).get("redirect");
+  const redirectTo =
+    requestedRedirect?.startsWith("/") && !requestedRedirect.startsWith("//")
+      ? requestedRedirect
+      : null;
 
   const handleChange = (e) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -41,7 +46,7 @@ export default function LoginPage() {
     if (res.success) {
       const nextUser = res?.data?.user || useAuthStore.getState().user;
       toast.success("Login successful! Redirecting to your dashboard.");
-      navigate(getDashboardPath(nextUser), { replace: true });
+      navigate(redirectTo || getDashboardPath(nextUser), { replace: true });
       return;
     }
 

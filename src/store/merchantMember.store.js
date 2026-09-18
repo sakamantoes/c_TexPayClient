@@ -1,6 +1,22 @@
 import { create } from "zustand";
 import merchantMemberService from "../service/merchantMember.service";
 
+/*
+|--------------------------------------------------------------------------
+| NOTIFICATION HELPERS
+|--------------------------------------------------------------------------
+| The backend uses `readAt` (ISO timestamp | null) — not a `read` boolean.
+| Always derive the read state from readAt.
+*/
+const isNotificationUnread = (n) => !n?.readAt;
+
+const normalizeNotification = (n) => ({
+  ...n,
+  // Convenience flag derived from the canonical `readAt` field.
+  // Do NOT persist this; always recompute from the API response.
+  read: Boolean(n?.readAt),
+});
+
 export const useMerchantMemberStore = create((set, get) => ({
   /*
   |--------------------------------------------------------------------------
@@ -24,9 +40,6 @@ export const useMerchantMemberStore = create((set, get) => ({
   |--------------------------------------------------------------------------
   */
 
-  /**
-   * Fetch all members of the current merchant.
-   */
   getMembers: async () => {
     set({ isLoading: true, error: null });
     try {
@@ -41,9 +54,6 @@ export const useMerchantMemberStore = create((set, get) => ({
     }
   },
 
-  /**
-   * Fetch a single member by ID.
-   */
   getMember: async (memberId) => {
     set({ isLoading: true, error: null });
     try {
@@ -58,9 +68,6 @@ export const useMerchantMemberStore = create((set, get) => ({
     }
   },
 
-  /**
-   * Assign a role to a member (body variant).
-   */
   assignRole: async (memberId, roleId) => {
     try {
       const res = await merchantMemberService.assignRole(memberId, roleId);
@@ -77,9 +84,6 @@ export const useMerchantMemberStore = create((set, get) => ({
     }
   },
 
-  /**
-   * Assign a role to a member (URL-param variant).
-   */
   assignRoleByParam: async (memberId, roleId) => {
     try {
       const res = await merchantMemberService.assignRoleByParam(
@@ -99,9 +103,6 @@ export const useMerchantMemberStore = create((set, get) => ({
     }
   },
 
-  /**
-   * Remove a role from a member.
-   */
   removeRole: async (memberId, roleId) => {
     try {
       const res = await merchantMemberService.removeRole(memberId, roleId);
@@ -118,9 +119,6 @@ export const useMerchantMemberStore = create((set, get) => ({
     }
   },
 
-  /**
-   * Remove a member from the merchant (soft delete → status: REMOVED).
-   */
   removeMember: async (memberId) => {
     try {
       const res = await merchantMemberService.removeMember(memberId);
@@ -143,13 +141,6 @@ export const useMerchantMemberStore = create((set, get) => ({
   |--------------------------------------------------------------------------
   */
 
-  /**
-   * Send an invitation to join the current merchant.
-   *
-   * @param {Object} payload
-   * @param {string} payload.email
-   * @param {string} payload.roleId
-   */
   inviteMember: async (payload) => {
     set({ isLoading: true, error: null });
     try {
@@ -164,12 +155,6 @@ export const useMerchantMemberStore = create((set, get) => ({
     }
   },
 
-  /**
-   * Accept an invitation (token variant).
-   *
-   * @param {Object} payload
-   * @param {string} payload.token
-   */
   acceptInvitation: async (payload) => {
     try {
       const res = await merchantMemberService.acceptMemberInvitation(payload);
@@ -181,11 +166,6 @@ export const useMerchantMemberStore = create((set, get) => ({
     }
   },
 
-  /**
-   * Accept an invitation by ID.
-   *
-   * @param {string} invitationId
-   */
   acceptInvitationById: async (invitationId) => {
     try {
       const res = await merchantMemberService.acceptInvitationById(
@@ -207,15 +187,22 @@ export const useMerchantMemberStore = create((set, get) => ({
 
   /**
    * Fetch notifications for the authenticated user.
+   * Normalizes `readAt` into a derived `read` flag for the UI.
    */
   getMyNotifications: async () => {
     set({ notificationsLoading: true, notificationsError: null });
     try {
       const res = await merchantMemberService.getMyNotifications();
+
+      const list = (res.data.notifications || []).map(
+        normalizeNotification
+      );
+
       set({
-        notifications: res.data.notifications || [],
+        notifications: list,
         notificationsLoading: false,
       });
+
       return { success: true, data: res };
     } catch (err) {
       const message =
@@ -226,22 +213,77 @@ export const useMerchantMemberStore = create((set, get) => ({
   },
 
   /**
-   * Mark a notification as read (optimistic).
+   * Mark a notification as read.
+   * Optimistically sets `readAt` to the current time, then reconciles
+   * with the server response if it returns one.
    */
   markNotificationRead: async (notificationId) => {
+    const now = new Date().toISOString();
+
+    // Optimistic update — keep both `readAt` and derived `read` in sync.
+    set((s) => ({
+      notifications: s.notifications.map((n) =>
+        n.id === notificationId
+          ? { ...n, readAt: n.readAt || now, read: true }
+          : n
+      ),
+    }));
+
     try {
-      await merchantMemberService.markNotificationRead(notificationId);
+      const res = await merchantMemberService.markNotificationRead(
+        notificationId
+      );
+
+      // If the backend returns the updated notification, use it as truth.
+      const updated =
+        res?.data?.notification ||
+        res?.data ||
+        null;
+
+      if (updated && updated.id) {
+        set((s) => ({
+          notifications: s.notifications.map((n) =>
+            n.id === notificationId ? normalizeNotification(updated) : n
+          ),
+        }));
+      }
+
+      return { success: true, data: res };
+    } catch (err) {
+      // Roll back the optimistic update on failure
       set((s) => ({
         notifications: s.notifications.map((n) =>
-          n.id === notificationId ? { ...n, read: true } : n
+          n.id === notificationId ? { ...n, readAt: null, read: false } : n
         ),
       }));
-      return { success: true };
-    } catch (err) {
+
       const message =
         err.response?.data?.message || "Failed to mark notification read";
       return { success: false, message };
     }
+  },
+
+  /**
+   * Mark all unread notifications as read (client-side loop).
+   * Useful for a "Mark all as read" button.
+   */
+  markAllNotificationsRead: async () => {
+    const unread = get().notifications.filter(isNotificationUnread);
+
+    if (unread.length === 0) return { success: true };
+
+    const results = await Promise.allSettled(
+      unread.map((n) => get().markNotificationRead(n.id))
+    );
+
+    const failed = results.filter(
+      (r) => r.status === "rejected" || r.value?.success === false
+    ).length;
+
+    return {
+      success: failed === 0,
+      failed,
+    };
   },
 
   /*
@@ -251,10 +293,11 @@ export const useMerchantMemberStore = create((set, get) => ({
   */
 
   /**
-   * Get count of unread notifications.
+   * Count of unread notifications.
+   * Derives from `readAt` so it's always accurate after a refresh.
    */
   getUnreadNotificationCount: () => {
-    return get().notifications.filter((n) => !n.read).length;
+    return get().notifications.filter(isNotificationUnread).length;
   },
 
   clearError: () => set({ error: null }),

@@ -47,10 +47,12 @@ export default function AssignRoleModal({
     [member]
   );
 
-  const availableRoles = useMemo(
-    () => (roles || []).filter((r) => !existingRoleIds.has(r.id)),
-    [roles, existingRoleIds]
-  );
+// Inside AssignRoleModal
+const availableRoles = useMemo(
+  () => (roles || []).filter((r) => !existingRoleIds.has(r.id)),
+  // 👆 no `!r.isSystemRole` filter — OWNER must be selectable
+  [roles, existingRoleIds]
+);
 
   if (!open) return null;
 

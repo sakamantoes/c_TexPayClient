@@ -32,6 +32,11 @@ import {
 import { useAuthStore } from "../../store/auth.store";
 import { useMerchantStore } from "../../store/merchant.store";
 
+/*
+|--------------------------------------------------------------------------
+| ICONS
+|--------------------------------------------------------------------------
+*/
 const ICONS = {
   dashboard: LayoutGrid,
   payments: CreditCard,
@@ -53,6 +58,7 @@ const ICONS = {
   profile: UserCircle2,
   overview: Sparkles,
   fees: TrendingUp,
+  team: Users,
 };
 
 const resolveIcon = (iconName) => ICONS[iconName] || LayoutGrid;
@@ -124,6 +130,8 @@ const DashboardLayout = ({
   navSections,
   profileName = "Operator",
   profileRole,
+  notificationCount = 0,
+  notificationsPath = "/user/dashboard/notifications",
   children,
 }) => {
   const navigate = useNavigate();
@@ -239,20 +247,13 @@ const DashboardLayout = ({
     setSigningOut(true);
 
     try {
-      await logout(); // auth store action
+      await logout();
     } catch (err) {
-      // logout() already swallows errors, but just in case
       console.error("Sign out error:", err);
     } finally {
-      // Clear merchant/membership data so the next user doesn't see it
       clearMerchant();
-
-      // Close mobile drawer if open
       setMobileOpen(false);
-
-      // Redirect to login (replace so back button doesn't loop)
       navigate("/login", { replace: true });
-
       setSigningOut(false);
     }
   };
@@ -456,11 +457,16 @@ const DashboardLayout = ({
 
                 <button
                   type="button"
+                  onClick={() => navigate(notificationsPath)}
                   className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-ctex-border bg-ctex-surface text-ctex-text-muted transition hover:text-ctex-blue"
                   aria-label="Notifications"
                 >
                   <Bell size={16} />
-                  <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-ctex-blue" />
+                  {notificationCount > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-ctex-blue px-1 text-[9px] font-semibold text-white">
+                      {notificationCount > 9 ? "9+" : notificationCount}
+                    </span>
+                  )}
                 </button>
               </div>
             </div>
