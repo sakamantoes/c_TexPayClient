@@ -240,6 +240,28 @@ export const useMerchantMemberStore = create((set, get) => ({
     }
   },
 
+    /**
+   * Delete ALL notifications (optimistic).
+   * Clears the list immediately; rolls back on failure.
+   */
+  deleteAllNotifications: async () => {
+    const previous = get().notifications;
+
+    // Optimistic clear
+    set({ notifications: [] });
+
+    try {
+      await merchantMemberService.deleteAllNotifications();
+      return { success: true };
+    } catch (err) {
+      // Roll back
+      set({ notifications: previous });
+      const message =
+        err.response?.data?.message || "Failed to delete notifications";
+      return { success: false, message };
+    }
+  },
+
   /*
   |--------------------------------------------------------------------------
   | UTILITIES
