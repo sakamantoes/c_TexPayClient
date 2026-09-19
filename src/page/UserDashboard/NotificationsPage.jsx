@@ -1,6 +1,10 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMerchantMemberStore } from "../../store/merchantMember.store";
+import { useMerchantStore } from "../../store/merchant.store";
+import { useAuthStore } from "../../store/auth.store";
 
 /*
 |--------------------------------------------------------------------------
@@ -8,6 +12,9 @@ import { useMerchantMemberStore } from "../../store/merchantMember.store";
 |--------------------------------------------------------------------------
 */
 const isUnread = (n) => !n?.readAt;
+
+const isInvitation = (n) =>
+  n?.type === "MERCHANT_INVITATION" && n?.data?.invitationId;
 
 const formatDate = (iso) => {
   if (!iso) return "";
@@ -25,6 +32,10 @@ const formatDate = (iso) => {
 };
 
 export default function NotificationsPage() {
+  const navigate = useNavigate();
+  const { getMe } = useAuthStore();
+  const { getMyMembership, clearMerchant } = useMerchantStore();
+
   const {
     notifications,
     notificationsLoading,
@@ -32,8 +43,16 @@ export default function NotificationsPage() {
     getMyNotifications,
     markNotificationRead,
     markAllNotificationsRead,
+    acceptInvitationById,
+    deleteNotification,
     clearNotificationsError,
   } = useMerchantMemberStore();
+
+  const [acceptingId, setAcceptingId] = useState(null);
+  // Track which notification is pending delete-confirm
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState(null);
+  // Track which notification is being deleted (spinner)
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     clearNotificationsError?.();
@@ -51,14 +70,57 @@ export default function NotificationsPage() {
     await markAllNotificationsRead();
   };
 
+  const handleAcceptInvitation = async (notification) => {
+    const invitationId = notification?.data?.invitationId;
+    if (!invitationId) {
+      toast.error("This invitation is missing its reference.");
+      return;
+    }
+
+    setAcceptingId(notification.id);
+    const res = await acceptInvitationById(invitationId);
+
+    if (!res.success) {
+      setAcceptingId(null);
+      toast.error(res.message || "Unable to accept invitation.");
+      return;
+    }
+
+    try {
+      await markNotificationRead(notification.id);
+    } catch {
+      /* ignore */
+    }
+
+    clearMerchant();
+
+    try {
+      await getMe();
+      await getMyMembership();
+    } catch {
+      /* ignore */
+    }
+
+    setAcceptingId(null);
+    toast.success("Invitation accepted. Welcome to the team!");
+  };
+
+  const handleDelete = async (notification) => {
+    setDeletingId(notification.id);
+    const res = await deleteNotification(notification.id);
+    setDeletingId(null);
+    setConfirmingDeleteId(null);
+
+    if (res.success) toast.success("Notification deleted.");
+    else toast.error(res.message || "Unable to delete notification.");
+  };
+
   return (
     <div className="space-y-4">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-ctex-text">
-            Notifications
-          </h2>
+          <h2 className="text-lg font-semibold text-ctex-text">Notifications</h2>
           <p className="mt-1 text-sm text-ctex-text-muted">
             Stay up to date with your account activity.
           </p>
@@ -86,17 +148,12 @@ export default function NotificationsPage() {
       {notificationsLoading && notifications.length === 0 ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-16 animate-pulse rounded-2xl bg-ctex-elevated"
-            />
+            <div key={i} className="h-16 animate-pulse rounded-2xl bg-ctex-elevated" />
           ))}
         </div>
       ) : notifications.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-ctex-border bg-ctex-surface/50 px-6 py-16 text-center">
-          <p className="text-sm font-medium text-ctex-text">
-            No notifications yet
-          </p>
+          <p className="text-sm font-medium text-ctex-text">No notifications yet</p>
           <p className="mt-1 text-xs text-ctex-text-muted">
             You&apos;ll see updates here when something happens.
           </p>
@@ -106,26 +163,36 @@ export default function NotificationsPage() {
           <AnimatePresence initial={false}>
             {notifications.map((n) => {
               const unread = isUnread(n);
+              const invitation = isInvitation(n);
+              const accepting = acceptingId === n.id;
+              const confirming = confirmingDeleteId === n.id;
+              const deleting = deletingId === n.id;
+
               return (
                 <motion.div
                   key={n.id}
                   layout
                   initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  onClick={() => unread && markNotificationRead(n.id)}
+                  exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                  transition={{ duration: 0.2 }}
                   className={[
                     "rounded-2xl border p-4 transition",
                     unread
-                      ? "cursor-pointer border-ctex-blue/30 bg-ctex-blue/5 hover:bg-ctex-blue/10"
+                      ? "border-ctex-blue/30 bg-ctex-blue/5"
                       : "border-ctex-border bg-ctex-surface",
                   ].join(" ")}
                 >
                   <div className="flex items-start gap-3">
-                    <span
+                    {/* Unread dot */}
+                    <button
+                      type="button"
+                      aria-label={unread ? "Mark as read" : "Already read"}
+                      disabled={!unread}
+                      onClick={() => unread && markNotificationRead(n.id)}
                       className={[
                         "mt-1.5 h-2 w-2 flex-shrink-0 rounded-full",
-                        unread ? "bg-ctex-blue" : "bg-ctex-border",
+                        unread ? "cursor-pointer bg-ctex-blue" : "bg-ctex-border",
                       ].join(" ")}
                     />
 
@@ -142,11 +209,26 @@ export default function NotificationsPage() {
                           {n.title || n.message || "Notification"}
                         </p>
 
-                        {unread && (
-                          <span className="flex-shrink-0 rounded-full bg-ctex-blue px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
-                            New
-                          </span>
-                        )}
+                        <div className="flex flex-shrink-0 items-center gap-1">
+                          {unread && (
+                            <span className="rounded-full bg-ctex-blue px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
+                              New
+                            </span>
+                          )}
+
+                          {/* Delete trigger — pencil = confirm mode */}
+                          {!confirming && (
+                            <button
+                              type="button"
+                              disabled={deleting}
+                              onClick={() => setConfirmingDeleteId(n.id)}
+                              aria-label="Delete notification"
+                              className="rounded-lg p-1.5 text-ctex-text-muted transition hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
+                            >
+                              <TrashIcon className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       {n.message && n.title && (
@@ -160,6 +242,76 @@ export default function NotificationsPage() {
                           {formatDate(n.createdAt)}
                         </p>
                       )}
+
+                      {/* Invitation actions */}
+                      {invitation && (
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            disabled={accepting || Boolean(n.readAt)}
+                            onClick={() => handleAcceptInvitation(n)}
+                            className="inline-flex items-center gap-2 rounded-xl bg-ctex-blue px-3.5 py-2 text-xs font-semibold text-white shadow-lg shadow-ctex-blue/25 transition hover:bg-ctex-blue-light disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {accepting ? (
+                              <>
+                                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                                Accepting…
+                              </>
+                            ) : n.readAt ? (
+                              "Accepted"
+                            ) : (
+                              "Accept invitation"
+                            )}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => navigate("/user/dashboard/overview")}
+                            className="rounded-xl border border-ctex-border bg-ctex-surface px-3.5 py-2 text-xs font-medium text-ctex-text-muted transition hover:border-ctex-blue/40 hover:text-ctex-blue"
+                          >
+                            View dashboard
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Inline delete confirmation */}
+                      <AnimatePresence>
+                        {confirming && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                            animate={{ opacity: 1, height: "auto", marginTop: 12 }}
+                            exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/5 px-3 py-2">
+                              <p className="text-xs text-ctex-text-muted">
+                                Delete this notification?
+                              </p>
+                              <div className="ml-auto flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setConfirmingDeleteId(null)}
+                                  disabled={deleting}
+                                  className="rounded-lg border border-ctex-border bg-ctex-surface px-2.5 py-1.5 text-[11px] font-medium text-ctex-text-muted transition hover:bg-ctex-elevated disabled:opacity-50"
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDelete(n)}
+                                  disabled={deleting}
+                                  className="inline-flex items-center gap-1.5 rounded-lg bg-red-500 px-2.5 py-1.5 text-[11px] font-semibold text-white transition hover:bg-red-600 disabled:opacity-60"
+                                >
+                                  {deleting && (
+                                    <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                                  )}
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   </div>
                 </motion.div>
@@ -169,5 +321,24 @@ export default function NotificationsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+/* --------------------------------------------------------------------------
+   Icons
+   -------------------------------------------------------------------------- */
+function TrashIcon({ className }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+    </svg>
   );
 }

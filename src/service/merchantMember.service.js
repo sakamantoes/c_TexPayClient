@@ -194,6 +194,30 @@ export const merchantMemberService = {
     return data;
   },
 
+    /**
+   * Delete a notification (owner = the authenticated user).
+   * DELETE /merchant-members/notifications/:id
+   *
+   * @param {string} notificationId
+   */
+  deleteNotification: async (notificationId) => {
+    if (!notificationId) throw new Error("Notification ID is required");
+
+    const { data } = await api.delete(
+      `/merchant-members/notifications/${encodeURIComponent(notificationId)}`
+    );
+    return data;
+  },
+
+    /**
+   * Delete ALL notifications for the authenticated user.
+   * DELETE /merchant-members/notifications
+   */
+  deleteAllNotifications: async () => {
+    const { data } = await api.delete("/merchant-members/notifications");
+    return data;
+  },
+
   /**
    * Mark a notification as read.
    * PATCH /merchant-members/notifications/:id/read
