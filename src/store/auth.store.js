@@ -57,32 +57,85 @@ export const useAuthStore = create(
       | LOGIN
       |--------------------------------------------------------------------------
       */
-      login: async ({ email, password }) => {
-        set({ isLoading: true, error: null });
-        try {
-          const res = await authService.login({ email, password });
-          const nextUser = res?.data?.user;
+    login: async ({ email, password }) => {
+  set({ isLoading: true, error: null });
+  try {
+    const res = await authService.login({ email, password });
+    const nextUser = res?.data?.user;
 
-          set({
-            user: nextUser,
-            isAuthenticated: true,
-            isLoading: false,
-            error: null,
-            verificationRequired: false,
-            verificationEmail: null,
-          });
+    /*
+    |--------------------------------------------------------------------------
+    | Defence-in-depth: even if the backend ever returns 200 for an
+    | unverified user, we refuse to authenticate them here.
+    |--------------------------------------------------------------------------
+    */
+    if (nextUser && nextUser.emailVerified === false) {
+      set({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+        error: null,
+        verificationRequired: true,
+        verificationEmail: nextUser.email || email,
+      });
 
-          if (nextUser) {
-            await syncMerchantState(nextUser);
-          }
+      return {
+        success: false,
+        requiresEmailVerification: true,
+        email: nextUser.email || email,
+        message:
+          "Please verify your email address before signing in.",
+      };
+    }
 
-          return { success: true, data: res };
-        } catch (err) {
-          const message = err.response?.data?.message || "Login failed";
-          set({ isLoading: false, error: message });
-          return { success: false, message };
-        }
-      },
+    set({
+      user: nextUser,
+      isAuthenticated: true,
+      isLoading: false,
+      error: null,
+      verificationRequired: false,
+      verificationEmail: null,
+    });
+
+    if (nextUser) {
+      await syncMerchantState(nextUser);
+    }
+
+    return { success: true, data: res };
+  } catch (err) {
+    const status = err.response?.status;
+    const code = err.response?.data?.code;
+    const responseEmail = err.response?.data?.data?.email || email;
+    const message =
+      err.response?.data?.message || "Login failed";
+
+    /*
+    | Backend rejected login because the email is not verified.
+    | Route the user into the "resend verification" flow instead
+    | of showing a generic error.
+    */
+    if (status === 403 && code === "EMAIL_NOT_VERIFIED") {
+      set({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+        error: null,
+        verificationRequired: true,
+        verificationEmail: responseEmail || null,
+      });
+
+      return {
+        success: false,
+        requiresEmailVerification: true,
+        email: responseEmail || null,
+        message,
+      };
+    }
+
+    set({ isLoading: false, error: message });
+    return { success: false, message };
+  }
+},
 
       /*
       |--------------------------------------------------------------------------
@@ -107,50 +160,72 @@ export const useAuthStore = create(
       | GET ME (bootstrap session on app load)
       |--------------------------------------------------------------------------
       */
-      getMe: async () => {
-        const token = localStorage.getItem("accessToken");
+    getMe: async () => {
+  const token = localStorage.getItem("accessToken");
 
-        if (!token) {
-          set({ initialized: true, isAuthenticated: false, user: null });
-          return;
-        }
+  if (!token) {
+    set({ initialized: true, isAuthenticated: false, user: null });
+    return;
+  }
 
-        // React Strict Mode and route remounts can invoke bootstrap more than
-        // once. Do not send duplicate session checks while one is in flight.
-        if (get().isLoading && !get().initialized) return;
+  if (get().isLoading && !get().initialized) return;
 
-        set({ isLoading: true });
-        try {
-          const res = await authService.getMe();
-          const nextUser = res?.data?.user;
+  set({ isLoading: true });
+  try {
+    const res = await authService.getMe();
+    const nextUser = res?.data?.user;
 
-          set({
-            user: nextUser,
-            isAuthenticated: true,
-            isLoading: false,
-            initialized: true,
-          });
+    /*
+    | If the backend returns a user that isn't verified, treat this
+    | the same as an unverified login.
+    */
+    if (nextUser && nextUser.emailVerified === false) {
+      set({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+        initialized: true,
+        verificationRequired: true,
+        verificationEmail: nextUser.email || null,
+      });
+      return;
+    }
 
-          if (nextUser) {
-            await syncMerchantState(nextUser);
-          }
-        } catch (err) {
-          const message = err.response?.data?.message;
-          const requiresVerification =
-            err.response?.status === 403 && message === "Your account is not active";
-          const email = get().user?.email || null;
+    set({
+      user: nextUser,
+      isAuthenticated: true,
+      isLoading: false,
+      initialized: true,
+    });
 
-          set({
-            user: null,
-            isAuthenticated: false,
-            isLoading: false,
-            initialized: true,
-            verificationRequired: requiresVerification,
-            verificationEmail: requiresVerification ? email : null,
-            error: requiresVerification ? null : message || null,
-          });
-        }
-      },
+    if (nextUser) {
+      await syncMerchantState(nextUser);
+    }
+  } catch (err) {
+    const status = err.response?.status;
+    const message = err.response?.data?.message;
+    const code = err.response?.data?.code;
+    const requiresVerification =
+      (status === 403 && message === "Your account is not active") ||
+      code === "EMAIL_NOT_VERIFIED";
+
+    const email =
+      err.response?.data?.data?.email ||
+      get().user?.email ||
+      get().verificationEmail ||
+      null;
+
+    set({
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
+      initialized: true,
+      verificationRequired: requiresVerification,
+      verificationEmail: requiresVerification ? email : null,
+      error: requiresVerification ? null : message || null,
+    });
+  }
+},
 
       /*
       |--------------------------------------------------------------------------

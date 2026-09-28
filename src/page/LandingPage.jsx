@@ -847,11 +847,11 @@ function DashboardPreview() {
               <p className="text-xs sm:text-sm font-medium text-[var(--ctex-text)]">API keys</p>
               <div className="mt-3 sm:mt-4 space-y-2.5 sm:space-y-3">
                 <div className="flex items-center justify-between font-mono text-[10px] sm:text-xs gap-2">
-                  <span className="text-[var(--ctex-text)] truncate">sk_live_••••••••8f21</span>
+                  <span className="text-[var(--ctex-text)] truncate">ctex_live_saka_••••••••8f21</span>
                   <span className="text-emerald-500 shrink-0">Active</span>
                 </div>
                 <div className="flex items-center justify-between font-mono text-[10px] sm:text-xs gap-2">
-                  <span className="text-[var(--ctex-text)] truncate">sk_test_••••••••1a09</span>
+                  <span className="text-[var(--ctex-text)] truncate">ctex_test_saka_••••••••1a09</span>
                   <span className="text-[var(--ctex-text-muted)] shrink-0">Test mode</span>
                 </div>
               </div>

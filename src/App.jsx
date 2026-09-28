@@ -42,9 +42,33 @@ import ApiKeysPage from "./page/MerchantDashboard/ApiKeysPage.jsx";
 
 import PermissionGuard from "./components/guards/PermissionGuard.jsx";
 
-// 👇 Aliased imports — two different BusinessProfilePage files
+// Aliased imports — two different BusinessProfilePage files
 import MerchantBusinessProfilePage from "./page/MerchantDashboard/BusinessProfilePage.jsx";
 import UserBusinessProfilePage from "./page/UserDashboard/BusinessProfilePage.jsx";
+
+/*
+|--------------------------------------------------------------------------
+| PUBLIC PATHS — never blocked by the verification guard
+|--------------------------------------------------------------------------
+| These are the paths a user can visit without being forced into the
+| email-verification flow. Includes all auth + landing pages.
+|--------------------------------------------------------------------------
+*/
+const PUBLIC_PATHS = [
+  "/",
+  "/login",
+  "/signup",
+  "/verify-email",
+  "/verify-email-sent",
+  "/forgot-password",
+  "/reset-password",
+  "/accept-invitation",
+];
+
+const isPublicPath = (pathname) =>
+  PUBLIC_PATHS.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`)
+  );
 
 const DashboardRouter = () => {
   const { user, isAuthenticated } = useAuthStore();
@@ -53,7 +77,6 @@ const DashboardRouter = () => {
     return <Navigate to="/login" replace />;
   }
 
-  // USERs go straight to their nested dashboard
   if (user?.role === ROLES.USER) {
     return <Navigate to="/user/dashboard/overview" replace />;
   }
@@ -82,11 +105,16 @@ const AppRoutes = () => {
     return <FullScreenLoader />;
   }
 
-  if (
-    verificationRequired &&
-    location.pathname !== "/verify-email-sent" &&
-    location.pathname !== "/verify-email"
-  ) {
+  /*
+  |--------------------------------------------------------------------------
+  | Verification guard
+  |--------------------------------------------------------------------------
+  | Only enforce the flow when the user tries to reach a PROTECTED page.
+  | Public pages (home, login, signup, etc.) are always reachable so the
+  | user is never trapped inside the verification flow.
+  |--------------------------------------------------------------------------
+  */
+  if (verificationRequired && !isPublicPath(location.pathname)) {
     const email = verificationEmail
       ? `?email=${encodeURIComponent(verificationEmail)}`
       : "";
@@ -99,11 +127,7 @@ const AppRoutes = () => {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<RegisterPage />} />
 
-      {/*
-      |----------------------------------------------------------------------
-      | /dashboard — route dispatcher by role
-      |----------------------------------------------------------------------
-      */}
+      {/* /dashboard — route dispatcher by role */}
       <Route
         path="/dashboard"
         element={
@@ -120,11 +144,7 @@ const AppRoutes = () => {
         }
       />
 
-      {/*
-      |----------------------------------------------------------------------
-      | USER DASHBOARD (nested)
-      |----------------------------------------------------------------------
-      */}
+      {/* USER DASHBOARD (nested) */}
       <Route
         path="/user/dashboard"
         element={
@@ -141,11 +161,7 @@ const AppRoutes = () => {
         <Route path="business" element={<UserBusinessProfilePage />} />
       </Route>
 
-      {/*
-      |----------------------------------------------------------------------
-      | AUTH FLOW
-      |----------------------------------------------------------------------
-      */}
+      {/* AUTH FLOW */}
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/verify-email-sent" element={<VerifyEmailSentPage />} />
       <Route path="/accept-invitation" element={<AcceptInvitationPage />} />
@@ -167,11 +183,7 @@ const AppRoutes = () => {
         }
       />
 
-      {/*
-      |----------------------------------------------------------------------
-      | MERCHANT DASHBOARD
-      |----------------------------------------------------------------------
-      */}
+      {/* MERCHANT DASHBOARD */}
       <Route
         path="/merchant/dashboard"
         element={
@@ -236,11 +248,7 @@ const AppRoutes = () => {
         }
       />
 
-      {/*
-      |----------------------------------------------------------------------
-      | ADMIN + SUPER ADMIN
-      |----------------------------------------------------------------------
-      */}
+      {/* ADMIN + SUPER ADMIN */}
       <Route
         path="/admin/dashboard"
         element={

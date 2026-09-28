@@ -6,12 +6,12 @@ export const useMerchantStore = create((set, get) => ({
   |--------------------------------------------------------------------------
   | STATE
   |--------------------------------------------------------------------------
-  | `merchant`         → the merchant the current user OWNS (or null)
-  | `businessProfile`  → business profile of the owned merchant
-  | `membership`       → the member record (owner OR team member)
-  | `membershipMerchant` → the merchant from the membership (read-only view)
-  | `roles`            → roles assigned to the current user
-  | `permissions`      → flattened permission keys from those roles
+  | `merchant`            → merchant the current user OWNS (or null)
+  | `businessProfile`     → business profile of the OWNED merchant
+  | `membership`          → the member record (owner OR team member)
+  | `membershipMerchant`  → merchant from membership (READ-ONLY view)
+  | `roles`               → roles assigned to the current user
+  | `permissions`         → flattened permission keys from those roles
   */
   merchant: null,
   businessProfile: null,
@@ -27,9 +27,8 @@ export const useMerchantStore = create((set, get) => ({
 
   /*
   |--------------------------------------------------------------------------
-  | CREATE MERCHANT
+  | CREATE MERCHANT (owner-only action)
   |--------------------------------------------------------------------------
-  | Owner-only. After success, sets both `merchant` and `businessProfile`.
   */
   createMerchant: async (payload) => {
     set({ isLoading: true, error: null });
@@ -60,8 +59,7 @@ export const useMerchantStore = create((set, get) => ({
   |--------------------------------------------------------------------------
   | GET MY MERCHANT (owned)
   |--------------------------------------------------------------------------
-  | Returns the merchant the user OWNS. 404 if they don't own one — that's
-  | a valid state, not an error worth surfacing.
+  | 404 = user owns no merchant. Legitimate state — clear silently.
   */
   getMyMerchant: async () => {
     set({ isLoading: true, error: null });
@@ -74,10 +72,7 @@ export const useMerchantStore = create((set, get) => ({
       });
       return { success: true, data: res };
     } catch (err) {
-      const status = err.response?.status;
-
-      // 404 = user does not own a merchant. Clear stale state silently.
-      if (status === 404) {
+      if (err.response?.status === 404) {
         set({
           merchant: null,
           businessProfile: null,
@@ -86,7 +81,6 @@ export const useMerchantStore = create((set, get) => ({
         });
         return { success: true, data: { data: { merchant: null } } };
       }
-
       const message =
         err.response?.data?.message || "Failed to load merchant";
       set({ isLoading: false, error: message });
@@ -128,13 +122,10 @@ export const useMerchantStore = create((set, get) => ({
       });
       return { success: true, data: res };
     } catch (err) {
-      const status = err.response?.status;
-
-      if (status === 404) {
+      if (err.response?.status === 404) {
         set({ businessProfile: null, isLoading: false, error: null });
         return { success: true, data: { data: { businessProfile: null } } };
       }
-
       const message =
         err.response?.data?.message || "Failed to load business profile";
       set({ isLoading: false, error: message });
@@ -168,8 +159,8 @@ export const useMerchantStore = create((set, get) => ({
   |--------------------------------------------------------------------------
   | GET MY MEMBERSHIP (roles + permissions + merchant view)
   |--------------------------------------------------------------------------
-  | Does NOT touch `merchant` or `businessProfile`. Stores the merchant
-  | returned by membership as `membershipMerchant` for read-only views.
+  | Does NOT touch `merchant` or `businessProfile`.
+  | Stores membership merchant separately as `membershipMerchant`.
   */
   getMyMembership: async () => {
     set({ isLoading: true, error: null });
@@ -186,10 +177,7 @@ export const useMerchantStore = create((set, get) => ({
 
       return { success: true, data: res };
     } catch (err) {
-      const status = err.response?.status;
-
-      // 404 = not a member of any merchant. Legitimate state.
-      if (status === 404) {
+      if (err.response?.status === 404) {
         set({
           membership: null,
           membershipMerchant: null,
@@ -200,7 +188,6 @@ export const useMerchantStore = create((set, get) => ({
         });
         return { success: true, data: { data: {} } };
       }
-
       const message =
         err.response?.data?.message || "Failed to load membership";
       set({ isLoading: false, error: message });
@@ -210,22 +197,33 @@ export const useMerchantStore = create((set, get) => ({
 
   /*
   |--------------------------------------------------------------------------
-  | SELECTORS
+  | DERIVED HELPERS
   |--------------------------------------------------------------------------
+  | Use these in components to avoid ambiguity.
   */
 
-  /** True when the current user OWNS a merchant. */
+  /** True only if the current user OWNS a merchant. */
   isMerchantOwner: () => Boolean(get().merchant),
 
-  /** True when the current user is a member (owner or not) of any merchant. */
+  /** True if the current user is a member (owner OR invited) of any merchant. */
   isTeamMember: () => Boolean(get().membership),
 
+  /** True if the user is a member but NOT the owner (invited only). */
+  isInvitedOnly: () => Boolean(get().membership) && !get().merchant,
+
   /** The merchant to display in a read-only context (prefers owned). */
-  getDisplayMerchant: () => get().merchant || get().membershipMerchant,
+  getDisplayMerchant: () =>
+    get().merchant || get().membershipMerchant,
+
+  /** The business profile to display in a read-only context. */
+  getDisplayBusinessProfile: () =>
+    get().businessProfile ||
+    get().membershipMerchant?.businessProfile ||
+    null,
 
   /*
   |--------------------------------------------------------------------------
-  | RESET / CLEAR
+  | RESET
   |--------------------------------------------------------------------------
   */
   clearMerchant: () =>

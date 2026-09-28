@@ -4,7 +4,6 @@ import { useAuthStore } from "../../store/auth.store";
 import { useMerchantStore } from "../../store/merchant.store";
 import { useMerchantMemberStore } from "../../store/merchantMember.store";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
-import { hasPermission } from "../../utils/permissions";
 
 /*
 |--------------------------------------------------------------------------
@@ -12,15 +11,15 @@ import { hasPermission } from "../../utils/permissions";
 |--------------------------------------------------------------------------
 | Three states drive the workspace section:
 |
-|   ownsMerchant   → show "Business Profile" (owned business, editable)
-|   isTeamMember   → show "My Team" (read-only, permission-gated)
-|   neither        → show "Create Business" (become a merchant)
+|   ownsMerchant   → "Business Profile" (owned, editable)
+|   isTeamMember   → "My Team" + "Business Info" (read-only reference)
+|   neither        → "Create Business" (become a merchant)
 |--------------------------------------------------------------------------
 */
-const buildUserNav = ({ permissions, ownsMerchant, isTeamMember }) => {
+const buildUserNav = ({ ownsMerchant, isTeamMember }) => {
   const workspaceItems = [];
 
-  // "Create Business" — only when the user has no workspace at all
+  // No business + no membership → show "Create Business"
   if (!ownsMerchant && !isTeamMember) {
     workspaceItems.push({
       key: "create-business",
@@ -30,7 +29,7 @@ const buildUserNav = ({ permissions, ownsMerchant, isTeamMember }) => {
     });
   }
 
-  // "Business Profile" — only when the user OWNS the business
+  // Owns a merchant → show editable business profile
   if (ownsMerchant) {
     workspaceItems.push({
       key: "business-profile",
@@ -40,14 +39,24 @@ const buildUserNav = ({ permissions, ownsMerchant, isTeamMember }) => {
     });
   }
 
-  // "My Team" — whenever the user is part of a merchant (owner or member)
-  if (ownsMerchant || isTeamMember) {
+  // Member of any merchant → "My Team"
+  if (isTeamMember) {
     workspaceItems.push({
       key: "team",
-      label: ownsMerchant ? "My Team" : "My Team",
+      label: "My Team",
       icon: "team",
       path: "/user/dashboard/team",
     });
+
+    // Invited-only member → read-only "Business Info"
+    if (!ownsMerchant) {
+      workspaceItems.push({
+        key: "business-reference",
+        label: "Business Info",
+        icon: "business",
+        path: "/user/dashboard/business",
+      });
+    }
   }
 
   return [
@@ -83,19 +92,33 @@ const buildUserNav = ({ permissions, ownsMerchant, isTeamMember }) => {
 export default function UserDashboard() {
   const location = useLocation();
   const { user } = useAuthStore();
+
   const {
-    merchant,
-    membership,
+    // state
     businessProfile,
     membershipMerchant,
     roles,
     permissions,
+    // actions
     getMyMerchant,
     getMyMembership,
+    // derived helpers (see merchant.store.js)
+    isMerchantOwner,
+    isTeamMember,
   } = useMerchantStore();
+
   const { getMyNotifications, getUnreadNotificationCount } =
     useMerchantMemberStore();
 
+  /*
+  |--------------------------------------------------------------------------
+  | Bootstrap: fetch owned merchant + membership + notifications
+  |--------------------------------------------------------------------------
+  | `getMyMerchant` returns 404 if user owns nothing — treated as a
+  | legitimate state by the store (no error).
+  | `getMyMembership` returns 404 if user has no membership.
+  |--------------------------------------------------------------------------
+  */
   useEffect(() => {
     getMyMerchant().catch(() => {});
     getMyMembership().catch(() => {});
@@ -103,12 +126,26 @@ export default function UserDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const ownsMerchant = Boolean(merchant);
-  const isTeamMember = Boolean(membership);
+  /*
+  |--------------------------------------------------------------------------
+  | Derived flags — pulled from store helpers, not ad-hoc checks
+  |--------------------------------------------------------------------------
+  */
+  const ownsMerchant = isMerchantOwner();
+  const hasMembership = isTeamMember();
 
+  /*
+  |--------------------------------------------------------------------------
+  | Nav — rebuilt whenever permissions or ownership flags change
+  |--------------------------------------------------------------------------
+  */
   const navSections = useMemo(
-    () => buildUserNav({ permissions, ownsMerchant, isTeamMember }),
-    [permissions, ownsMerchant, isTeamMember]
+    () =>
+      buildUserNav({
+        ownsMerchant,
+        isTeamMember: hasMembership,
+      }),
+    [ownsMerchant, hasMembership]
   );
 
   const displayName =
@@ -118,12 +155,21 @@ export default function UserDashboard() {
 
   const primaryRole = roles[0]?.name || "Member";
 
-  // Subtitle: owned merchant > membership merchant > generic
+  /*
+  |--------------------------------------------------------------------------
+  | Subtitle: owned business > membership business > generic
+  |--------------------------------------------------------------------------
+  */
   const subtitle =
-    businessProfile?.businessName ||
+    (ownsMerchant ? businessProfile?.businessName : null) ||
     membershipMerchant?.businessProfile?.businessName ||
     "Your account";
 
+  /*
+  |--------------------------------------------------------------------------
+  | Auto-redirect: /user/dashboard → /user/dashboard/overview
+  |--------------------------------------------------------------------------
+  */
   if (location.pathname === "/user/dashboard") {
     return <Navigate to="/user/dashboard/overview" replace />;
   }

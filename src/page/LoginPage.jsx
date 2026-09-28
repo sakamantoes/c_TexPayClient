@@ -16,10 +16,15 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [localError, setLocalError] = useState("");
 
+  // Read one-shot state flags passed by other flows
   const justVerified = location.state?.verified;
   const justReset = location.state?.reset;
   const justChanged = location.state?.passwordChanged;
-  const requestedRedirect = new URLSearchParams(location.search).get("redirect");
+
+  // Safe redirect (only allow internal paths)
+  const requestedRedirect = new URLSearchParams(location.search).get(
+    "redirect"
+  );
   const redirectTo =
     requestedRedirect?.startsWith("/") && !requestedRedirect.startsWith("//")
       ? requestedRedirect
@@ -38,18 +43,42 @@ export default function LoginPage() {
     if (!form.email.trim()) return setLocalError("Email is required");
     if (!form.password) return setLocalError("Password is required");
 
-    const res = await login({
-      email: form.email.trim().toLowerCase(),
-      password: form.password,
-    });
+    const email = form.email.trim().toLowerCase();
 
+    const res = await login({ email, password: form.password });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Success — navigate to dashboard (or requested redirect)
+    |--------------------------------------------------------------------------
+    */
     if (res.success) {
       const nextUser = res?.data?.user || useAuthStore.getState().user;
-      toast.success("Login successful! Redirecting to your dashboard.");
+      toast.success("Login successful. Redirecting to your dashboard.");
       navigate(redirectTo || getDashboardPath(nextUser), { replace: true });
       return;
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Unverified email — route into the resend-verification flow
+    |--------------------------------------------------------------------------
+    */
+    if (res.requiresEmailVerification) {
+      const targetEmail = res.email || email;
+      toast.info("Please verify your email to continue.");
+      navigate(
+        `/verify-email-sent?email=${encodeURIComponent(targetEmail)}`,
+        { replace: true }
+      );
+      return;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Any other failure — surface the message
+    |--------------------------------------------------------------------------
+    */
     toast.error(res.message || "Login failed. Please try again.");
   };
 
@@ -71,6 +100,7 @@ export default function LoginPage() {
         </>
       }
     >
+      {/* One-shot banners from other flows */}
       <AnimatePresence>
         {justVerified && (
           <motion.div
@@ -168,16 +198,16 @@ export default function LoginPage() {
   );
 }
 
-/* ----------------------------- Banner Component ----------------------------- */
+/* --------------------------------------------------------------------------
+   Banner Component
+   -------------------------------------------------------------------------- */
 
 function Banner({ type = "info", children }) {
   const styles = {
     success:
       "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-    error:
-      "border-red-500/30 bg-red-500/10 text-red-500",
-    info:
-      "border-ctex-blue/30 bg-ctex-blue/10 text-ctex-blue",
+    error: "border-red-500/30 bg-red-500/10 text-red-500",
+    info: "border-ctex-blue/30 bg-ctex-blue/10 text-ctex-blue",
     warning:
       "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400",
   };
@@ -195,7 +225,9 @@ function Banner({ type = "info", children }) {
   );
 }
 
-/* ------------------------------- Icons ------------------------------- */
+/* --------------------------------------------------------------------------
+   Icons
+   -------------------------------------------------------------------------- */
 
 function MailIcon({ className }) {
   return (
