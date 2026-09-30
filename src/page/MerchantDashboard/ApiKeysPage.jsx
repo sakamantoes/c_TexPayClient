@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import { useAuthStore } from "../../store/auth.store";
@@ -40,8 +40,11 @@ export default function ApiKeysPage() {
   const [selectedPermissions, setSelectedPermissions] = useState([]);
   const [expiresAt, setExpiresAt] = useState("");
 
-  // 👇 new: which key is being revealed
+  // which key is being revealed
   const [revealing, setRevealing] = useState(null);
+
+  // select-all checkbox ref (for indeterminate state)
+  const selectAllRef = useRef(null);
 
   useEffect(() => {
     getApiKeys();
@@ -54,7 +57,7 @@ export default function ApiKeysPage() {
     hasPermission(permissions, "api_keys.manage") ||
     roles.some((role) => role.name === "OWNER");
 
-  // 👇 Only owners can reveal secrets (backend enforces this too)
+  // Only owners can reveal secrets (backend enforces this too)
   const isOwner = roles.some((role) => role.name === "OWNER");
 
   const displayName = useMemo(
@@ -62,12 +65,28 @@ export default function ApiKeysPage() {
     [user]
   );
 
+  const allKeys = useMemo(() => catalogue.map((permission) => permission.key), [catalogue]);
+  const selectedCount = useMemo(
+    () => allKeys.filter((key) => selectedPermissions.includes(key)).length,
+    [allKeys, selectedPermissions]
+  );
+  const allSelected = allKeys.length > 0 && selectedCount === allKeys.length;
+  const someSelected = selectedCount > 0 && !allSelected;
+
+  useEffect(() => {
+    if (selectAllRef.current) selectAllRef.current.indeterminate = someSelected;
+  }, [someSelected]);
+
   const togglePermission = (key) => {
     setSelectedPermissions((current) =>
       current.includes(key)
         ? current.filter((value) => value !== key)
         : [...current, key]
     );
+  };
+
+  const toggleAllPermissions = () => {
+    setSelectedPermissions(allSelected ? [] : allKeys);
   };
 
   const handleCreate = async (event) => {
@@ -183,9 +202,25 @@ export default function ApiKeysPage() {
                 className="h-11 w-full rounded-xl border border-ctex-border bg-ctex-elevated/60 px-3 text-sm text-ctex-text outline-none focus:border-ctex-blue"
               />
               <div>
-                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-ctex-text-muted">
-                  Permissions
-                </p>
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-xs font-medium uppercase tracking-wide text-ctex-text-muted">
+                    Permissions
+                  </p>
+                  {catalogue.length > 0 && (
+                    <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-ctex-text-muted hover:text-ctex-blue">
+                      <input
+                        ref={selectAllRef}
+                        type="checkbox"
+                        checked={allSelected}
+                        onChange={toggleAllPermissions}
+                      />
+                      Select all
+                      <span className="text-ctex-text-muted/70">
+                        ({selectedCount}/{catalogue.length})
+                      </span>
+                    </label>
+                  )}
+                </div>
                 <div className="max-h-48 space-y-2 overflow-y-auto pr-1">
                   {catalogue.map((permission) => (
                     <label
@@ -255,7 +290,7 @@ export default function ApiKeysPage() {
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                      {/* 👇 Reveal — owner-only, ACTIVE keys only */}
+                      {/* Reveal — owner-only, ACTIVE keys only */}
                       {isOwner && key.status === "ACTIVE" && (
                         <button
                           type="button"
@@ -296,7 +331,7 @@ export default function ApiKeysPage() {
         </div>
       </div>
 
-      {/* 👇 Reveal modal */}
+      {/* Reveal modal */}
       <RevealKeyModal
         open={!!revealing}
         apiKey={revealing}
